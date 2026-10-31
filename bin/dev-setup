@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# dev-setup: instala, diagnostica y actualiza el entorno de desarrollo en macOS.
+# Uso: dev-setup <doctor|bootstrap|update> [opciones]. Ayuda: dev-setup --help
+set -euo pipefail
+
+# Raíz del repo aunque se invoque por un enlace (~/.local/bin/dev-setup).
+# Sin `readlink -f`, que no existe en macOS anteriores a 12.3.
+resolve_root() {
+  local source="${BASH_SOURCE[0]}" dir
+  while [ -L "$source" ]; do
+    dir="$(cd -P "$(dirname "$source")" && pwd)"
+    source="$(readlink "$source")"
+    case "$source" in /*) ;; *) source="$dir/$source" ;; esac
+  done
+  cd -P "$(dirname "$source")/.." && pwd
+}
+
+DEV_SETUP_ROOT="$(resolve_root)"
+readonly DEV_SETUP_ROOT
+
+# shellcheck source=lib/log.sh
+. "$DEV_SETUP_ROOT/lib/log.sh"
+# shellcheck source=lib/run.sh
+. "$DEV_SETUP_ROOT/lib/run.sh"
+# shellcheck source=lib/prompt.sh
+. "$DEV_SETUP_ROOT/lib/prompt.sh"
+# shellcheck source=lib/fs.sh
+. "$DEV_SETUP_ROOT/lib/fs.sh"
+# shellcheck source=lib/config.sh
+. "$DEV_SETUP_ROOT/lib/config.sh"
+
+# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install y _update.
+DEV_SETUP_MODULES="system"
+for module in $DEV_SETUP_MODULES; do
+  # shellcheck source=/dev/null
+  . "$DEV_SETUP_ROOT/modules/$module.sh"
+done
+
+usage() {
+  cat <<USAGE
+Uso: dev-setup <subcomando> [opciones]
+
+Subcomandos:
+  doctor      Diagnostica la máquina: qué hay, qué falta y qué choca. No cambia nada.
+  bootstrap   Instala y configura lo que falta. No reemplaza lo que ya existe.
+  update      Actualiza lo que gestiona dev-setup.
+
+Opciones:
+  --dry-run           Muestra lo que haría, sin cambiar nada.
+  -y, --yes           Acepta las confirmaciones sin preguntar.
+  --with <grupo>      Activa un grupo opcional (se guarda en local.env).
+  --without <grupo>   Desactiva un grupo opcional (se guarda en local.env).
+  -h, --help          Muestra esta ayuda.
+  -V, --version       Muestra la versión.
+
+Grupos opcionales: $DEV_SETUP_GROUPS
+USAGE
+}
+
+die_usage() {
+  error "$1"
+  printf '  Usa dev-setup --help\n' >&2
+  exit 2
+}
+
+run_modules() {
+  local action="$1" module
+  for module in $DEV_SETUP_MODULES; do
+    if declare -F "${module}_${action}" >/dev/null; then
+      "${module}_${action}"
+    fi
+  done
+}
+
+# Solo se instala en macOS. Los tests lo saltan con DEV_SETUP_SKIP_OS_CHECK=1.
+require_macos() {
+  is_dry_run || [ "${DEV_SETUP_SKIP_OS_CHECK:-0}" = 1 ] || is_macos ||
+    die "dev-setup solo instala en macOS; en $(uname -s) usa doctor o --dry-run"
+}
+
+cmd_doctor() {
+  config_load
+  config_apply_overrides
+  run_modules doctor
+}
+
+cmd_bootstrap() {
+  require_macos
+  is_dry_run || log_init bootstrap
+  config_load
+  config_apply_overrides
+  section "Grupos opcionales"
+  config_ask_groups
+  config_save_groups
+  run_modules install
+  finish
+}
+
+cmd_update() {
+  require_macos
+  is_dry_run || log_init update
+  config_load
+  config_apply_overrides
+  config_save_groups
+  run_modules update
+  finish
+}
+
+finish() {
+  section "Listo"
+  if is_dry_run; then
+    info "Simulación: no se cambió nada"
+  else
+    info "Log: $DEV_SETUP_LOG_FILE"
+  fi
+}
+
+main() {
+  local command="" flag group
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      doctor | bootstrap | update)
+        [ -z "$command" ] || die_usage "Solo se admite un subcomando"
+        command="$1"
+        ;;
+      --dry-run) DEV_SETUP_DRY_RUN=1 ;;
+      -y | --yes) DEV_SETUP_ASSUME_YES=1 ;;
+      --with | --without | --with=* | --without=*)
+        flag="${1%%=*}"
+        if [ "$flag" = "$1" ]; then
+          [ $# -ge 2 ] || die_usage "$flag necesita un grupo"
+          group="$2"
+          shift
+        else
+          group="${1#*=}"
+        fi
+        if [ "$flag" = --with ]; then
+          config_override_group "$group" 1 || die_usage "Grupo desconocido: $group"
+        else
+          config_override_group "$group" 0 || die_usage "Grupo desconocido: $group"
+        fi
+        ;;
+      -h | --help | help)
+        usage
+        exit 0
+        ;;
+      -V | --version)
+        printf 'dev-setup %s\n' "$(dev_setup_version)"
+        exit 0
+        ;;
+      *) die_usage "Opción o subcomando desconocido: $1" ;;
+    esac
+    shift
+  done
+  if [ -z "$command" ]; then
+    usage >&2
+    exit 2
+  fi
+  trap 'printf "\n"; warn "Interrumpido"; exit 130' INT
+  "cmd_$command"
+}
+
+main "$@"

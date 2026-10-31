@@ -31,19 +31,21 @@ Antes de dar una tarea por terminada:
 ## Arquitectura
 
 - `install.sh`: entrada remota para una Mac sin `git`, fijada a un tag (`curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/vX.Y.Z/install.sh | bash`). Instala Command Line Tools y Homebrew, clona el repo en `~/Claude/dev-setup`, enlaza `bin/dev-setup` en `~/.local/bin` y corre `dev-setup bootstrap`.
-- `bin/dev-setup`: el CLI. Subcomandos `doctor`, `bootstrap` y `update`, con las banderas `--dry-run`, `--yes`, `--with` y `--without`.
-- `lib/`: utilidades compartidas (logs, detección, respaldos, confirmaciones). Todo cambio en la máquina pasa por una única función que respeta `--dry-run`.
-- `modules/<área>.sh`: un módulo por área (base, android, agents, claude, gradle, studio y grupos opcionales). Cada uno implementa `doctor`, `install` y `update`.
+- `bin/dev-setup`: el CLI. Subcomandos `doctor`, `bootstrap` y `update`, con las banderas `--dry-run`, `--yes`, `--with` y `--without`. Códigos de salida: 0 bien, 1 error, 2 uso incorrecto.
+- `lib/`: utilidades compartidas. `log.sh` (mensajes y log), `run.sh` (`run_cmd`), `prompt.sh` (preguntas, leídas de `/dev/tty`), `fs.sh` (`backup_file` y `ensure_block`) y `config.sh` (`local.env`). **Todo cambio en la máquina pasa por `run_cmd`**, que respeta `--dry-run` y lo registra en el log.
+- `modules/<área>.sh`: un módulo por área (system, base, android, agents, claude, gradle, studio y grupos opcionales), registrado en `DEV_SETUP_MODULES` de `bin/dev-setup`. Cada uno define las funciones que necesite: `<módulo>_doctor`, `<módulo>_install` y `<módulo>_update`.
 - Los datos van separados del código: `Brewfile` y listas de texto (paquetes del SDK, skills oficiales de Android, plugins de Claude Code). Agregar una herramienta es editar una lista, no un script.
 - Lo propio de cada máquina no se versiona: `local.env` (grupos elegidos y ajustes) y `repos.txt` (repos a clonar, que pueden ser privados). Los `.example` documentan su formato.
 - Lo que mantiene otro repo se instala con su propio instalador, nunca se copia aquí: las skills propias con `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills) y `testigo` con `testigo setup`.
-- Logs en `~/Library/Logs/dev-setup/`.
+- Logs en `~/Library/Logs/dev-setup/`, uno por ejecución de `bootstrap` o `update` (nunca en `doctor` ni en `--dry-run`).
+- `tests/*.bats` aíslan la máquina con un `HOME` temporal y las variables `DEV_SETUP_LOCAL_ENV`, `DEV_SETUP_NONINTERACTIVE` y `DEV_SETUP_SKIP_OS_CHECK`, que existen solo para los tests. El CI los corre en Linux y en macOS con el Bash 3.2 del sistema.
 
 ## Base y grupos opcionales
 
 - **Base:** Command Line Tools, Homebrew, `gh`, `jq`, `shellcheck`, `bats-core`, Temurin LTS, JetBrains Toolbox, Android CLI con el SDK, Claude Code.
 - **Opcionales:** `ai-local` (LM Studio), `terminal` (Warp), `node` (nvm y pnpm), `ios` (aviso para instalar Xcode).
-- La primera vez se pregunta por cada grupo y la respuesta se guarda en `local.env`. En el `Brewfile`, cada grupo opcional se condiciona con una variable `DEV_SETUP_<GRUPO>`.
+- La primera vez se pregunta por cada grupo y la respuesta se guarda en `local.env`. Sin terminal, los grupos sin elegir quedan desactivados: son opt-in. En el `Brewfile`, cada grupo opcional se condiciona con su variable `DEV_SETUP_<GRUPO>`.
+- `local.env` nunca se ejecuta: se leen solo las líneas `CLAVE=valor` conocidas y válidas.
 
 ## Reglas del proyecto
 
