@@ -4,7 +4,8 @@
 is_macos() { [ "$(uname -s)" = Darwin ]; }
 
 dev_setup_version() {
-  git -C "$DEV_SETUP_ROOT" describe --tags --always --dirty 2>/dev/null || printf 'desconocida'
+  # --no-optional-locks: doctor no debe escribir ni el índice de git.
+  git --no-optional-locks -C "$DEV_SETUP_ROOT" describe --tags --always --dirty 2>/dev/null || printf 'desconocida'
 }
 
 system_doctor() {
