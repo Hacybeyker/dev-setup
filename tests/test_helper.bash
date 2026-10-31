@@ -17,6 +17,8 @@ setup_env() {
   export DEV_SETUP_BREWFILE="$REPO_ROOT/tests/fixtures/Brewfile"
   export DEV_SETUP_HOMEBREW_PREFIX="$BATS_TEST_TMPDIR/no-homebrew"
   export DEV_SETUP_JAVA_HOME_CMD="$STUBS/java_home"
+  export DEV_SETUP_ANDROID_DATA="$REPO_ROOT/tests/fixtures/android"
+  unset CLAUDE_CONFIG_DIR JAVA_HOME ANDROID_HOME
   export FAKE_LOG="$BATS_TEST_TMPDIR/calls.log"
   : >"$FAKE_LOG"
 
@@ -24,6 +26,10 @@ setup_env() {
   export FAKE_BREW_FORMULAE="tool-managed"
   export FAKE_BREW_CASKS=""
   export FAKE_JDKS="17"
+  # Android: pkg-installed está en el SDK y skill-installed, en ~/.claude/skills.
+  export FAKE_SDK_INSTALLED="pkg-installed"
+  mkdir -p "$HOME/.claude/skills/skill-installed"
+  printf -- '---\nname: skill-installed\n---\n' >"$HOME/.claude/skills/skill-installed/SKILL.md"
   make_stub brew <<'STUB'
 printf 'brew %s\n' "$*" >>"$FAKE_LOG"
 case "$1" in
@@ -50,6 +56,18 @@ STUB
 case " $FAKE_JDKS " in *" $2 "*) echo "/fake/jdk-$2"; exit 0 ;; esac
 exit 1
 STUB
+  make_stub android <<'STUB'
+printf 'android %s\n' "$*" >>"$FAKE_LOG"
+if [ "$1 ${2:-}" = "sdk list" ]; then
+  echo "Installed packages:"
+  for package in $FAKE_SDK_INSTALLED; do printf '  %-30s 1.0.0    Paquete %s\n' "$package" "$package"; done
+  echo ""
+  echo "Available packages:"
+  echo "  pkg/missing-1                  1.0.0    No instalado"
+fi
+[ "$1" != -V ] || echo "1.1.0"
+exit 0
+STUB
   make_stub tool-external-bin <<'STUB'
 exit 0
 STUB
@@ -70,6 +88,9 @@ load_libs() {
     # shellcheck source=/dev/null
     . "$REPO_ROOT/lib/$lib.sh"
   done
-  # shellcheck source=/dev/null
-  . "$REPO_ROOT/modules/base.sh"
+  local module
+  for module in base android; do
+    # shellcheck source=/dev/null
+    . "$REPO_ROOT/modules/$module.sh"
+  done
 }

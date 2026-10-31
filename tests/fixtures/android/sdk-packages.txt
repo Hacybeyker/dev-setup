@@ -1,0 +1,4 @@
+# Lista de prueba
+pkg-installed
+pkg/missing-1
+pkg/missing-2

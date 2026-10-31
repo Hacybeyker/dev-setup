@@ -1,0 +1,10 @@
+# Paquetes del SDK de Android que instala dev-setup, uno por línea.
+# Rutas tal como las muestra `android sdk list --all`. Lo que ya esté instalado no se toca.
+# Actualiza la plataforma, las build-tools y la imagen cuando salga una nueva versión estable.
+platform-tools
+emulator
+cmdline-tools/latest
+build-tools/36.1.0
+platforms/android-37.0
+# Imagen para el emulador: Google Play, arm64 y páginas de 16 KB (obligatorias en Play)
+system-images/android-37.0/google_apis_playstore_ps16k/arm64-v8a
