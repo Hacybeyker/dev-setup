@@ -143,6 +143,12 @@ $(android_duplicated_skills)
 EOF_DUP
 }
 
+android_next_steps() {
+  if ! android_studio_app >/dev/null; then
+    next_step "Instala Android Studio desde JetBrains Toolbox, ábrelo una vez y corre dev-setup update para ajustar su memoria"
+  fi
+}
+
 android_doctor() {
   local android installed package skill app version
   section "Android"

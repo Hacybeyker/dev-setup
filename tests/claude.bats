@@ -146,3 +146,15 @@ setup() {
   done < <(list_entries "$REPO_ROOT/claude/marketplaces.txt")
   jq -e . "$REPO_ROOT/claude/settings.json"
 }
+
+@test "los comandos de claude no heredan la entrada de la terminal" {
+  load_libs
+  printf 'entrada\n' >"$BATS_TEST_TMPDIR/stdin"
+  export FAKE_CLAUDE_STRICT_STDIN=1
+  run claude_install_plugins <"$BATS_TEST_TMPDIR/stdin"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Marketplace market-installed"* ]]
+  [[ "$output" == *"plugin-installed@market-installed"* ]]
+  run accounts_doctor <"$BATS_TEST_TMPDIR/stdin"
+  [[ "$output" == *"✔ Claude Code"* ]]
+}

@@ -30,18 +30,18 @@ Antes de dar una tarea por terminada:
 
 ## Arquitectura
 
-- `install.sh`: entrada remota para una Mac sin `git`, fijada a un tag (`curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/vX.Y.Z/install.sh | bash`). Instala Command Line Tools y Homebrew, clona el repo en `~/Claude/dev-setup`, enlaza `bin/dev-setup` en `~/.local/bin` y corre `dev-setup bootstrap`.
+- `install.sh`: entrada remota para una Mac sin `git`, fijada a un tag (`curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/vX.Y.Z/install.sh | bash`). Instala las Command Line Tools, clona el repo en `~/Claude/dev-setup` en el tag de `DEV_SETUP_REF` y corre `dev-setup bootstrap` leyendo de `/dev/tty`; Homebrew y el enlace en `~/.local/bin` los pone el módulo base. Es autónomo: no usa `lib/`. Opciones: `DEV_SETUP_DIR`, `DEV_SETUP_REF` y `DEV_SETUP_REPO_URL`.
 - `bin/dev-setup`: el CLI. Subcomandos `doctor`, `bootstrap` y `update`, con las banderas `--dry-run`, `--yes`, `--with` y `--without`. Códigos de salida: 0 bien, 1 error, 2 uso incorrecto.
-- `lib/`: utilidades compartidas. `log.sh` (mensajes y log), `run.sh` (`run_cmd`), `prompt.sh` (preguntas, leídas de `/dev/tty`), `fs.sh` (`backup_file` y `ensure_block`), `config.sh` (`local.env`) y `shell.sh` (el bloque de `~/.zshrc`). **Todo cambio en la máquina pasa por `run_cmd`**, que respeta `--dry-run` y lo registra en el log.
-- `modules/<área>.sh`: un módulo por área (system, base, android, studio, agents, claude, node, ios), registrado en `DEV_SETUP_MODULES` de `bin/dev-setup`. Cada uno define las funciones que necesite: `<módulo>_doctor`, `<módulo>_install`, `<módulo>_update` y `<módulo>_shell` (líneas para el bloque de `~/.zshrc`, que deben respetar lo que el usuario ya tenga definido).
+- `lib/`: utilidades compartidas. `log.sh` (mensajes y log), `run.sh` (`run_cmd`), `prompt.sh` (preguntas, leídas de `/dev/tty`), `fs.sh` (`backup_file` y `ensure_block`), `config.sh` (`local.env`), `shell.sh` (el bloque de `~/.zshrc`) y `steps.sh` (`next_step`: lo que le toca al usuario, que se muestra al final de `bootstrap` y `update`). **Todo cambio en la máquina pasa por `run_cmd`**, que respeta `--dry-run` y lo registra en el log.
+- `modules/<área>.sh`: un módulo por área (system, base, android, studio, agents, claude, node, ios, accounts, repos), registrado en `DEV_SETUP_MODULES` de `bin/dev-setup`. Cada uno define las funciones que necesite: `<módulo>_doctor`, `<módulo>_install`, `<módulo>_update` `<módulo>_shell` (líneas para el bloque de `~/.zshrc`, que deben respetar lo que el usuario ya tenga definido) y `<módulo>_next_steps` (pasos manuales pendientes, con `next_step`).
 - Los datos van separados del código: `Brewfile` y listas de texto (paquetes del SDK, skills oficiales de Android, plugins de Claude Code). Agregar una herramienta es editar una lista, no un script.
 - Android: `android/sdk-packages.txt` y `android/skills.txt`. Las skills oficiales se instalan solo para Claude Code (`--agent=claude-code`): Android Studio ya las trae en `~/.android-studio/skills` y también lee `~/.agents/skills`. Nunca se usa `android init`, que instala su skill en todos los agentes que detecta.
-- Claude Code: `claude/plugins.txt`, `claude/marketplaces.txt` (una tercera columna opcional ata la entrada a un grupo) y `claude/settings.json`, que se fusiona con `~/.claude/settings.json` con `jq`: lo existente gana, se agregan las claves que faltan y las listas se unen. Las carpetas de skills de `permissions.additionalDirectories` se calculan a partir de los enlaces de `~/.claude/skills` y `~/.agents/skills`.
+- Claude Code: `claude/plugins.txt`, `claude/marketplaces.txt` (una tercera columna opcional ata la entrada a un grupo) y `claude/settings.json`, que se fusiona con `~/.claude/settings.json` con `jq`: lo existente gana, se agregan las claves que faltan y las listas se unen. Las carpetas de skills de `permissions.additionalDirectories` se calculan a partir de los enlaces de `~/.claude/skills` y `~/.agents/skills`. Todos los comandos de `claude` van con `</dev/null`: Claude Code se cae si su entrada es `/dev/tty`, que es como `install.sh` deja a `bootstrap`.
 - Cada entrada del `Brewfile` lleva `# bin: <comando>`, `# app: <App.app>` o `# jdk: <versión>` para detectar si ya existe fuera de Homebrew; un test lo exige.
 - Lo propio de cada máquina no se versiona: `local.env` (grupos elegidos y ajustes) y `repos.txt` (repos a clonar, que pueden ser privados). Los `.example` documentan su formato.
 - Lo que mantiene otro repo se instala con su propio instalador, nunca se copia aquí: las skills propias con `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills) y `testigo` con `testigo setup`.
 - Logs en `~/Library/Logs/dev-setup/`, uno por ejecución de `bootstrap` o `update` (nunca en `doctor` ni en `--dry-run`).
-- `tests/*.bats` aíslan la máquina con un `HOME` temporal y las variables `DEV_SETUP_LOCAL_ENV`, `DEV_SETUP_NONINTERACTIVE`, `DEV_SETUP_SKIP_OS_CHECK`, `DEV_SETUP_BREWFILE`, `DEV_SETUP_HOMEBREW_PREFIX`, `DEV_SETUP_JAVA_HOME_CMD`, `DEV_SETUP_ANDROID_DATA`, `DEV_SETUP_CLAUDE_DATA`, `DEV_SETUP_AGENT_SKILLS_DIR`, `DEV_SETUP_AGENT_SKILLS_REPO`, `DEV_SETUP_RAM_GIB` y `DEV_SETUP_XCODE_APP`, que existen solo para los tests. Corren con un `PATH` mínimo y comandos falsos (`tests/test_helper.bash`): nunca llaman a `brew`, `android`, `claude`, `testigo` ni `curl` reales. El CI los corre en Linux y en macOS con el Bash 3.2 del sistema. Los nombres de test van en ASCII, sin tildes: con el Bash 3.2 de macOS, bats no lee algunos caracteres (`tests/meta.bats` lo verifica).
+- `tests/*.bats` aíslan la máquina con un `HOME` temporal y las variables `DEV_SETUP_LOCAL_ENV`, `DEV_SETUP_NONINTERACTIVE`, `DEV_SETUP_SKIP_OS_CHECK`, `DEV_SETUP_BREWFILE`, `DEV_SETUP_HOMEBREW_PREFIX`, `DEV_SETUP_JAVA_HOME_CMD`, `DEV_SETUP_ANDROID_DATA`, `DEV_SETUP_CLAUDE_DATA`, `DEV_SETUP_AGENT_SKILLS_DIR`, `DEV_SETUP_AGENT_SKILLS_REPO`, `DEV_SETUP_REPOS`, `DEV_SETUP_RAM_GIB` y `DEV_SETUP_XCODE_APP`, que existen solo para los tests. Corren con un `PATH` mínimo y comandos falsos (`tests/test_helper.bash`): nunca llaman a `brew`, `android`, `claude`, `gh`, `testigo` ni `curl` reales. El CI los corre en Linux y en macOS con el Bash 3.2 del sistema. Los nombres de test van en ASCII, sin tildes: con el Bash 3.2 de macOS, bats no lee algunos caracteres (`tests/meta.bats` lo verifica).
 
 ## Base y grupos opcionales
 
@@ -63,6 +63,8 @@ Antes de dar una tarea por terminada:
 - Node.js: si ya existe, o lo gestiona otra herramienta (fnm, volta, mise, asdf), no se instala nvm. nvm se instala fijado a una versión y con `PROFILE=/dev/null`, para que no toque `~/.zshrc`; `update` nunca cambia la versión de Node.js ni baja la de nvm.
 - Sin `sudo`: si un paso lo necesita (por ejemplo, `xcode-select -s`), se muestra el comando para que lo corra el usuario.
 - No se toca `~/.gradle/gradle.properties`: pisa la configuración de cada proyecto, que es la que también corre en el CI.
+- `repos.txt`: solo se clonan los repos que faltan. Nunca se hace pull ni se toca una carpeta que ya existe.
+- Sesiones: dev-setup nunca inicia sesión. Revisa con `gh auth status`, `claude auth status` y `android auth status` y lista lo que falta.
 
 **Código:**
 
@@ -82,7 +84,7 @@ Antes de dar una tarea por terminada:
 ## Versionado y release
 
 - SemVer con tags `vX.Y.Z` y `CHANGELOG.md` según Keep a Changelog. Cada cambio agrega su entrada en `[Unreleased]`.
-- El comando de instalación remota del README apunta siempre al último tag publicado.
+- El comando de instalación remota del README y `DEV_SETUP_REF` de `install.sh` apuntan siempre al último tag publicado: se fijan en el PR del release.
 
 ## Seguridad
 

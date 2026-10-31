@@ -25,6 +25,20 @@ ios_install() {
 }
 ios_update() { ios_install; }
 
+ios_next_steps() {
+  local app
+  group_enabled ios || return 0
+  app="$(xcode_app)"
+  if [ ! -d "$app" ]; then
+    next_step "Instala Xcode desde la App Store (grupo ios) y ábrelo una vez para aceptar su licencia"
+  else
+    case "$(xcode-select -p 2>/dev/null || true)" in
+      "$app"/*) ;;
+      *) next_step "Usa Xcode para compilar iOS: sudo xcode-select -s $app/Contents/Developer" ;;
+    esac
+  fi
+}
+
 ios_doctor() {
   if group_enabled ios; then
     ios_check

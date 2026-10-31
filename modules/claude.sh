@@ -6,6 +6,8 @@ CLAUDE_INSTALL_URL="https://claude.ai/install.sh"
 claude_data_dir() { printf '%s' "${DEV_SETUP_CLAUDE_DATA:-$DEV_SETUP_ROOT/claude}"; }
 claude_settings_path() { printf '%s/settings.json' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"; }
 
+# Claude Code se cae si su entrada es /dev/tty, como la deja install.sh para que bootstrap
+# pueda preguntar. Ninguno de sus comandos que usa dev-setup necesita teclado: todos van con </dev/null.
 claude_cmd() {
   if command -v claude >/dev/null 2>&1; then
     command -v claude
@@ -96,7 +98,7 @@ claude_ensure_cli() {
     return 0
   fi
   info "Instalando Claude Code con su instalador oficial (se actualiza solo)"
-  run_cmd /bin/bash -c "curl -fsSL $CLAUDE_INSTALL_URL | bash"
+  run_cmd /bin/bash -c "curl -fsSL $CLAUDE_INSTALL_URL | bash" </dev/null
   is_dry_run || info "La primera vez, inicia sesión con: claude"
 }
 
@@ -113,8 +115,8 @@ claude_brew_cask() {
   return 1
 }
 
-claude_installed_plugins() { "$1" plugin list --json 2>/dev/null | jq -r '.[] | select(.scope == "user") | .id'; }
-claude_known_marketplaces() { "$1" plugin marketplace list --json 2>/dev/null | jq -r '.[].name'; }
+claude_installed_plugins() { "$1" plugin list --json </dev/null 2>/dev/null | jq -r '.[] | select(.scope == "user") | .id'; }
+claude_known_marketplaces() { "$1" plugin marketplace list --json </dev/null 2>/dev/null | jq -r '.[].name'; }
 
 claude_install_plugins() {
   local claude markets installed name source group id
@@ -125,7 +127,7 @@ claude_install_plugins() {
     if in_lines "$name" "$markets"; then
       ok "Marketplace $name"
     else
-      run_cmd "$claude" plugin marketplace add "$source" --scope user
+      run_cmd "$claude" plugin marketplace add "$source" --scope user </dev/null
     fi
   done 3< <(list_entries "$(claude_data_dir)/marketplaces.txt")
   installed="$(claude_installed_plugins "$claude" || true)"
@@ -134,7 +136,7 @@ claude_install_plugins() {
     if in_lines "$id" "$installed"; then
       ok "$id"
     else
-      run_cmd "$claude" plugin install "$id" --scope user
+      run_cmd "$claude" plugin install "$id" --scope user </dev/null
     fi
   done 3< <(list_entries "$(claude_data_dir)/plugins.txt")
 }
@@ -157,7 +159,7 @@ claude_update() {
   if cask="$(claude_brew_cask)"; then
     run_cmd "$(brew_cmd)" upgrade --cask "$cask"
   else
-    run_cmd "$claude" update
+    run_cmd "$claude" update </dev/null
   fi
   claude_ensure_settings
   section "Plugins de Claude Code"
@@ -165,14 +167,14 @@ claude_update() {
   while read -r name source group <&3; do
     [ -z "$group" ] || group_enabled "$group" || continue
     if in_lines "$name" "$markets"; then
-      run_cmd "$claude" plugin marketplace update "$name"
+      run_cmd "$claude" plugin marketplace update "$name" </dev/null
     fi
   done 3< <(list_entries "$(claude_data_dir)/marketplaces.txt")
   installed="$(claude_installed_plugins "$claude" || true)"
   while read -r id group <&3; do
     [ -z "$group" ] || group_enabled "$group" || continue
     if in_lines "$id" "$installed"; then
-      run_cmd "$claude" plugin update "$id"
+      run_cmd "$claude" plugin update "$id" </dev/null
     else
       warn "$id: falta, corre dev-setup bootstrap"
     fi
@@ -183,7 +185,7 @@ claude_doctor() {
   local claude file markets="" installed="" name source group id
   section "Claude Code"
   if claude="$(claude_cmd)"; then
-    ok "Claude Code $("$claude" --version 2>/dev/null | head -n 1) en $claude"
+    ok "Claude Code $("$claude" --version </dev/null 2>/dev/null | head -n 1) en $claude"
     markets="$(claude_known_marketplaces "$claude" || true)"
     installed="$(claude_installed_plugins "$claude" || true)"
   else
