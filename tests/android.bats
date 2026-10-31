@@ -57,14 +57,25 @@ setup() {
   [[ "$output" == *"pkg/missing-1: falta, corre dev-setup bootstrap"* ]]
 }
 
-@test "avisa de las skills que Android Studio ve dos veces, sin borrarlas" {
+@test "avisa de las copias de skills que Android Studio ve dos veces, sin borrarlas" {
   mkdir -p "$HOME/.agents/skills/repetida" "$HOME/.android-studio/skills/repetida" "$HOME/.android-studio/skills/enlazada"
+  printf 'v1\n' | tee "$HOME/.agents/skills/repetida/SKILL.md" >"$HOME/.android-studio/skills/repetida/SKILL.md"
   ln -s "$BATS_TEST_TMPDIR" "$HOME/.agents/skills/enlazada"
   run "$DEV_SETUP" doctor
   [ "$status" -eq 0 ]
-  [[ "$output" == *"repetida está en ~/.agents/skills y en ~/.android-studio/skills"* ]]
-  [[ "$output" != *"enlazada está en"* ]]
+  [[ "$output" == *"repetida también está copiada en ~/.agents/skills"*"rm -rf ~/.agents/skills/repetida"* ]]
+  [[ "$output" != *"enlazada"*"~/.agents/skills"* ]]
   [ -d "$HOME/.agents/skills/repetida" ]
+}
+
+@test "si la copia de ~/.agents/skills es distinta, avisa que puede estar desactualizada" {
+  mkdir -p "$HOME/.agents/skills/repetida" "$HOME/.android-studio/skills/repetida"
+  printf 'v1\n' >"$HOME/.agents/skills/repetida/SKILL.md"
+  printf 'v2\n' >"$HOME/.android-studio/skills/repetida/SKILL.md"
+  run "$DEV_SETUP" doctor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"⚠ repetida en ~/.agents/skills es distinta"*"probablemente desactualizada"* ]]
+  [ "$(cat "$HOME/.agents/skills/repetida/SKILL.md")" = v1 ]
 }
 
 @test "detecta Android Studio instalado por Toolbox en ~/Applications" {
