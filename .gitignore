@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Configuración propia de cada máquina (no se versiona)
+local.env
+.env
+
+# Entorno virtual de Python
+.venv/
+
+# Logs de ejecución de los scripts
+*.log
+
+# Repos a clonar en cada máquina (pueden ser privados)
+repos.txt
