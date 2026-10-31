@@ -56,6 +56,10 @@ jobs:
 
       # /bin primero en el PATH: los scripts corren con el Bash 3.2 de macOS, el mismo de una Mac nueva.
       - name: Correr los tests con el Bash 3.2 de macOS
+        env:
+          # El runner usa el locale C; una Terminal de macOS usa UTF-8, y bats lo necesita para
+          # leer los nombres de test con acentos.
+          LC_ALL: en_US.UTF-8
         run: |
           export PATH="/bin:$PATH"
           bash --version | head -n 1
