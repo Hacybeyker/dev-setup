@@ -16,7 +16,9 @@ Una Mac limpia no tiene `git`, así que el arranque es un solo comando que desca
 curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/vX.Y.Z/install.sh | bash
 ```
 
-Instala Command Line Tools y Homebrew, clona este repo en `~/Claude/dev-setup`, deja el comando `dev-setup` en `~/.local/bin` y corre `dev-setup bootstrap`. Tarda entre 30 y 60 minutos, casi todo en descargas.
+Instala las Command Line Tools (traen `git`), clona este repo en `~/Claude/dev-setup` en la versión del instalador y corre `dev-setup bootstrap`, que instala Homebrew y todo lo demás y deja el comando `dev-setup` en `~/.local/bin`. Tarda entre 30 y 60 minutos, casi todo en descargas. Al final te lista lo que te toca a ti, como los logins.
+
+Para elegir los grupos opcionales desde el inicio, pásalos al final: `... | bash -s -- --with node --with ios`. Para clonar en otra carpeta: `... | DEV_SETUP_DIR=~/otra/carpeta bash`. Si la carpeta ya es un clon de dev-setup, la usa tal como está; si es otra cosa, no la toca.
 
 ### En una Mac que ya tiene cosas instaladas
 
@@ -31,7 +33,7 @@ Todas las opciones: `dev-setup --help`. Con `-y` acepta las confirmaciones sin p
 ### Día a día
 
 ```bash
-dev-setup update   # Homebrew, Android CLI, SDK, skills, repos y plugins de Claude Code
+dev-setup update   # Homebrew, Android CLI, SDK, skills, plugins de Claude Code, nvm y los repos que falten
 ```
 
 ## Qué instala
@@ -67,14 +69,14 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 - **agent-skills:** lo clona junto a dev-setup (por ejemplo `~/Claude/agent-skills`) y corre su `install.sh`. Si la carpeta ya existe y no es un clon, no la toca.
 - **Android Studio:** memoria del IDE (`-Xmx` en `studio.vmoptions`) según la RAM: 4 GB con menos de 32 GB, 6 GB desde 32 GB y 8 GB desde 64 GB, o el valor de `DEV_SETUP_STUDIO_XMX` en `local.env`. Si ya tiene uno (por ejemplo, puesto desde *Settings → Memory Settings*), lo respeta. Hace falta haber abierto Android Studio una vez.
 - **Shell:** un único bloque marcado `# >>> dev-setup >>>` en `~/.zshrc` (o `$ZDOTDIR/.zshrc`) con `~/.local/bin` en el `PATH`, Homebrew, `JAVA_HOME`, `ANDROID_HOME`, las herramientas del SDK (`adb`, `emulator`) y nvm si el grupo `node` está activo. Cada línea respeta lo que ya tengas definido.
-- **Repos (opcional):** clona tus proyectos desde `repos.txt`.
+- **Repos (opcional):** clona los repos de `repos.txt` que falten. Nunca hace pull ni toca una carpeta que ya existe: tus repos pueden tener trabajo en curso.
 
 ## Qué no hace, y por qué
 
 | No hace | Por qué | Qué hacer |
 | --- | --- | --- |
 | Instalar Android Studio | Se gestiona desde JetBrains Toolbox junto con los demás IDEs; dos vías de instalación se pisan | Instalarlo desde Toolbox mientras corre `bootstrap` |
-| Iniciar sesión en nada | Las credenciales nunca pasan por un script | Al final, `dev-setup` te pide cada login: `gh auth login`, Claude Code y `android auth login` |
+| Iniciar sesión en nada | Las credenciales nunca pasan por un script | Al final, `bootstrap` y `update` te listan solo los logins pendientes: `gh auth login`, `claude auth login` y, opcional, `android auth login`. `doctor` muestra el estado de cada sesión |
 | Aceptar las licencias del SDK | Las aceptas tú | Se muestran durante `bootstrap` |
 | Restaurar secretos (keystores, `google-services.json`, tokens) | No van en un repo público | Desde tu gestor de contraseñas |
 | Instalar Xcode | Pide Apple ID y pesa unos 15 GB | Desde la App Store; con el grupo `ios`, `doctor` te dice qué falta |

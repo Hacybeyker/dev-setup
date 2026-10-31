@@ -25,9 +25,20 @@ warn_if_not_zsh() {
 }
 
 shell_apply() {
-  section "Shell ($(zshrc_path))"
+  local file before after
+  file="$(zshrc_path)"
+  section "Shell ($file)"
   warn_if_not_zsh
-  ensure_block "$(zshrc_path)" "$SHELL_BLOCK_ID" "$(shell_block_content)"
+  before="$({ cksum <"$file"; } 2>/dev/null || true)"
+  ensure_block "$file" "$SHELL_BLOCK_ID" "$(shell_block_content)"
+  after="$({ cksum <"$file"; } 2>/dev/null || true)"
+  [ "$before" = "$after" ] || SHELL_CHANGED=1
+}
+
+shell_next_steps() {
+  if [ "${SHELL_CHANGED:-0}" = 1 ]; then
+    next_step "Abre una terminal nueva (o corre: source $(zshrc_path)) para cargar los cambios"
+  fi
 }
 
 shell_doctor() {

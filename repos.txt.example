@@ -1,0 +1,12 @@
+# Repos que dev-setup clona en bootstrap y update. Copia este archivo como repos.txt: no se versiona.
+#
+# Una línea por repo: <url> [destino]
+# - El destino es absoluto o empieza con ~/, sin espacios. Sin destino, se clona junto a dev-setup
+#   (por ejemplo, ~/Claude/<repo>).
+# - Si el destino ya existe, no se toca. dev-setup nunca hace pull en tus repos: pueden tener
+#   trabajo en curso.
+# - Los privados necesitan tu sesión de GitHub (gh auth login) o tu llave SSH. Si falla, queda
+#   como paso pendiente y se clona en el siguiente dev-setup update.
+#
+# https://github.com/Hacybeyker/testigo.git
+# git@github.com:<usuario>/<repo-privado>.git ~/Projects/<repo-privado>

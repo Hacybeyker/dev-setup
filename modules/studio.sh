@@ -74,6 +74,12 @@ studio_ensure_memory() {
 }
 
 studio_install() { studio_ensure_memory; }
+
+studio_next_steps() {
+  if android_studio_app >/dev/null && ! studio_config_dir >/dev/null; then
+    next_step "Abre Android Studio una vez y corre dev-setup update para ajustar su memoria"
+  fi
+}
 studio_update() { studio_ensure_memory; }
 
 studio_doctor() {

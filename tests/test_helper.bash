@@ -21,6 +21,7 @@ setup_env() {
   export DEV_SETUP_CLAUDE_DATA="$REPO_ROOT/tests/fixtures/claude"
   export DEV_SETUP_AGENT_SKILLS_DIR="$BATS_TEST_TMPDIR/agent-skills"
   export DEV_SETUP_AGENT_SKILLS_REPO="$BATS_TEST_TMPDIR/agent-skills-origin"
+  export DEV_SETUP_REPOS="$BATS_TEST_TMPDIR/repos.txt"
   export DEV_SETUP_RAM_GIB=16
   export DEV_SETUP_XCODE_APP="$BATS_TEST_TMPDIR/Xcode.app"
   unset CLAUDE_CONFIG_DIR JAVA_HOME ANDROID_HOME NVM_DIR DEV_SETUP_STUDIO_XMX
@@ -71,6 +72,12 @@ if [ "$1 ${2:-}" = "sdk list" ]; then
   echo "  pkg/missing-1                  1.0.0    No instalado"
 fi
 [ "$1" != -V ] || echo "1.1.0"
+if [ "$1 ${2:-}" = "auth status" ]; then [ "${FAKE_ANDROID_LOGGED_IN:-1}" = 1 ] || exit 1; fi
+exit 0
+STUB
+  make_stub gh <<'STUB'
+printf 'gh %s\n' "$*" >>"$FAKE_LOG"
+if [ "$1 ${2:-}" = "auth status" ]; then [ "${FAKE_GH_LOGGED_IN:-1}" = 1 ] || exit 1; fi
 exit 0
 STUB
   # Claude Code: market-installed y plugin-installed ya están; engineering llega sincronizado de claude.ai.
@@ -78,12 +85,15 @@ STUB
   export FAKE_CLAUDE_PLUGINS="plugin-installed@market-installed"
   make_stub claude <<'STUB'
 printf 'claude %s\n' "$*" >>"$FAKE_LOG"
+# Como el Claude Code real, se cae si recibe una entrada que puede leer (ver modules/claude.sh).
+if [ "${FAKE_CLAUDE_STRICT_STDIN:-0}" = 1 ] && [ -s /dev/stdin ]; then echo "claude: entrada inesperada" >&2; exit 1; fi
 case "$*" in
   "plugin list --json")
     printf '[{"id":"engineering@synced","scope":"synced","enabled":true}'
     for id in $FAKE_CLAUDE_PLUGINS; do printf ',{"id":"%s","scope":"user","enabled":true}' "$id"; done
     printf ']\n'
     ;;
+  "auth status") [ "${FAKE_CLAUDE_LOGGED_IN:-1}" = 1 ] || exit 1 ;;
   "plugin marketplace list --json")
     printf '['; sep=""
     for name in $FAKE_CLAUDE_MARKETPLACES; do printf '%s{"name":"%s","source":"github"}' "$sep" "$name"; sep=","; done
@@ -134,12 +144,12 @@ make_stub() {
 load_libs() {
   DEV_SETUP_ROOT="$REPO_ROOT"
   local lib
-  for lib in log run prompt fs config shell; do
+  for lib in log run prompt fs config shell steps; do
     # shellcheck source=/dev/null
     . "$REPO_ROOT/lib/$lib.sh"
   done
   local module
-  for module in base android studio agents claude node ios; do
+  for module in base android studio agents claude node ios accounts repos; do
     # shellcheck source=/dev/null
     . "$REPO_ROOT/modules/$module.sh"
   done

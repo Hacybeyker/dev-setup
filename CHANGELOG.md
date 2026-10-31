@@ -25,5 +25,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Grupo node: nvm (fijado a v0.40.8, sin tocar el perfil), Node.js LTS y pnpm. Respeta Node.js ya instalado y otros gestores (fnm, volta, mise, asdf).
 - Grupo ios: revisa Xcode y `xcode-select` y dice qué falta, sin correr `sudo`.
 - `--dry-run` muestra los comandos como se escriben en la terminal.
+- `install.sh`: entrada remota para una Mac nueva (también por pipe). Instala las Command Line Tools, clona dev-setup en la versión del instalador y corre `bootstrap`. No toca una carpeta que ya existe.
+- Módulo repos: clona los repos de `repos.txt` que faltan, sin pull y sin tocar carpetas que ya existen.
+- "Lo que te toca" al final de `bootstrap` y `update`: logins pendientes (gh, Claude Code, Android CLI), Android Studio, Xcode, repos sin clonar y abrir una terminal nueva. `doctor` muestra el estado de las sesiones.
 
 [Unreleased]: https://github.com/Hacybeyker/dev-setup/commits/main

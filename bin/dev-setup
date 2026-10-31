@@ -30,10 +30,12 @@ readonly DEV_SETUP_ROOT
 . "$DEV_SETUP_ROOT/lib/config.sh"
 # shellcheck source=lib/shell.sh
 . "$DEV_SETUP_ROOT/lib/shell.sh"
+# shellcheck source=lib/steps.sh
+. "$DEV_SETUP_ROOT/lib/steps.sh"
 
-# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update
-# y _shell (las líneas que aporta al bloque de ~/.zshrc).
-DEV_SETUP_MODULES="system base android studio agents claude node ios"
+# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update,
+# _shell (las líneas que aporta al bloque de ~/.zshrc) y _next_steps (lo que le toca al usuario).
+DEV_SETUP_MODULES="system base android studio agents claude node ios accounts repos"
 for module in $DEV_SETUP_MODULES; do
   # shellcheck source=/dev/null
   . "$DEV_SETUP_ROOT/modules/$module.sh"
@@ -113,6 +115,11 @@ cmd_update() {
 }
 
 finish() {
+  if ! is_dry_run; then
+    run_modules next_steps
+    shell_next_steps
+    print_next_steps
+  fi
   section "Listo"
   if is_dry_run; then
     info "Simulación: no se cambió nada"
