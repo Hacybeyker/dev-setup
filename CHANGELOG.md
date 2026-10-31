@@ -19,5 +19,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - `update` actualiza solo lo que Homebrew gestiona del `Brewfile`.
 - Módulo android: Android CLI (instalador oficial, sin sudo), paquetes del SDK de `android/sdk-packages.txt` y skills oficiales de `android/skills.txt` para Claude Code. Avisa de las skills que Android Studio vería dos veces.
 - `ANDROID_HOME`, `adb` y `emulator` en el bloque de `~/.zshrc`, respetando lo ya definido.
+- Módulo agents: clona agent-skills junto a dev-setup y corre su `install.sh`; instala testigo con su instalador oficial y `testigo setup`. `update` hace `git pull --ff-only` y solo actualiza testigo si lo instaló su instalador.
+- Módulo claude: Claude Code (instalador oficial; si se instaló con Homebrew, `update` lo actualiza con `brew upgrade`), marketplaces y plugins de `claude/` en scope user, y fusión de `~/.claude/settings.json` que conserva lo existente.
 
 [Unreleased]: https://github.com/Hacybeyker/dev-setup/commits/main

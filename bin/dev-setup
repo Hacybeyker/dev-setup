@@ -33,7 +33,7 @@ readonly DEV_SETUP_ROOT
 
 # Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update
 # y _shell (las líneas que aporta al bloque de ~/.zshrc).
-DEV_SETUP_MODULES="system base android"
+DEV_SETUP_MODULES="system base android agents claude"
 for module in $DEV_SETUP_MODULES; do
   # shellcheck source=/dev/null
   . "$DEV_SETUP_ROOT/modules/$module.sh"

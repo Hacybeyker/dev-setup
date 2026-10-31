@@ -18,6 +18,9 @@ setup_env() {
   export DEV_SETUP_HOMEBREW_PREFIX="$BATS_TEST_TMPDIR/no-homebrew"
   export DEV_SETUP_JAVA_HOME_CMD="$STUBS/java_home"
   export DEV_SETUP_ANDROID_DATA="$REPO_ROOT/tests/fixtures/android"
+  export DEV_SETUP_CLAUDE_DATA="$REPO_ROOT/tests/fixtures/claude"
+  export DEV_SETUP_AGENT_SKILLS_DIR="$BATS_TEST_TMPDIR/agent-skills"
+  export DEV_SETUP_AGENT_SKILLS_REPO="$BATS_TEST_TMPDIR/agent-skills-origin"
   unset CLAUDE_CONFIG_DIR JAVA_HOME ANDROID_HOME
   export FAKE_LOG="$BATS_TEST_TMPDIR/calls.log"
   : >"$FAKE_LOG"
@@ -68,10 +71,55 @@ fi
 [ "$1" != -V ] || echo "1.1.0"
 exit 0
 STUB
+  # Claude Code: market-installed y plugin-installed ya están; engineering llega sincronizado de claude.ai.
+  export FAKE_CLAUDE_MARKETPLACES="market-installed"
+  export FAKE_CLAUDE_PLUGINS="plugin-installed@market-installed"
+  make_stub claude <<'STUB'
+printf 'claude %s\n' "$*" >>"$FAKE_LOG"
+case "$*" in
+  "plugin list --json")
+    printf '[{"id":"engineering@synced","scope":"synced","enabled":true}'
+    for id in $FAKE_CLAUDE_PLUGINS; do printf ',{"id":"%s","scope":"user","enabled":true}' "$id"; done
+    printf ']\n'
+    ;;
+  "plugin marketplace list --json")
+    printf '['; sep=""
+    for name in $FAKE_CLAUDE_MARKETPLACES; do printf '%s{"name":"%s","source":"github"}' "$sep" "$name"; sep=","; done
+    printf ']\n'
+    ;;
+  --version) echo "2.1.300 (Claude Code)" ;;
+esac
+exit 0
+STUB
+  make_stub testigo <<'STUB'
+printf 'testigo %s\n' "$*" >>"$FAKE_LOG"
+exit 0
+STUB
+  # Red de seguridad: ningún test descarga nada.
+  make_stub curl <<'STUB'
+printf 'curl %s\n' "$*" >>"$FAKE_LOG"
+exit 1
+STUB
+  make_fake_agent_skills "$DEV_SETUP_AGENT_SKILLS_DIR"
   make_stub tool-external-bin <<'STUB'
 exit 0
 STUB
   mkdir -p "$HOME/Applications/App External.app"
+}
+
+# make_fake_agent_skills <carpeta>: un clon falso de agent-skills cuyo install.sh enlaza hb-fake.
+make_fake_agent_skills() {
+  mkdir -p "$1/.git" "$1/skills/hb-fake"
+  printf -- '---\nname: hb-fake\n---\n' >"$1/skills/hb-fake/SKILL.md"
+  cat >"$1/install.sh" <<'SCRIPT'
+#!/usr/bin/env bash
+set -euo pipefail
+repo="$(cd "$(dirname "$0")" && pwd -P)"
+printf 'agent-skills install.sh\n' >>"$FAKE_LOG"
+mkdir -p "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+ln -sfn "$repo/skills/hb-fake" "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills/hb-fake"
+SCRIPT
+  chmod +x "$1/install.sh"
 }
 
 # make_stub <nombre>: crea un comando falso en $STUBS con el cuerpo que llega por stdin.
@@ -89,7 +137,7 @@ load_libs() {
     . "$REPO_ROOT/lib/$lib.sh"
   done
   local module
-  for module in base android; do
+  for module in base android agents claude; do
     # shellcheck source=/dev/null
     . "$REPO_ROOT/modules/$module.sh"
   done

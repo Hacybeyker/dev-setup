@@ -21,8 +21,7 @@ backup_file() {
 #   # >>> <id> >>>
 #   <contenido>
 #   # <<< <id> <<<
-# sin tocar el resto del archivo. Si hay cambios, muestra el diff, pide confirmación y respalda.
-# Escribe a través de enlaces simbólicos y conserva los permisos del archivo.
+# sin tocar el resto del archivo. Los cambios pasan por apply_file_change.
 ensure_block() {
   local file="$1" id="$2" content="$3"
   local begin="# >>> $id >>>" end="# <<< $id <<<"
@@ -54,7 +53,14 @@ ensure_block() {
     cat "$block" >>"$new"
   fi
   rm -f "$block"
+  apply_file_change "$file" "$new"
+}
 
+# apply_file_change <archivo> <nuevo>: reemplaza el archivo por el contenido de <nuevo> si cambió.
+# Muestra el diff, respeta --dry-run, pide confirmación y respalda. Siempre borra <nuevo>.
+# Escribe a través de enlaces simbólicos y conserva los permisos del archivo.
+apply_file_change() {
+  local file="$1" new="$2"
   if [ -e "$file" ] && cmp -s "$file" "$new"; then
     rm -f "$new"
     ok "$file ya está al día"
@@ -94,3 +100,6 @@ list_entries() {
     [ -z "$line" ] || printf '%s\n' "$line"
   done <"$1"
 }
+
+# in_lines <valor> <líneas>: 0 si el valor es exactamente una de las líneas.
+in_lines() { printf '%s\n' "$2" | grep -qxF -- "$1"; }
