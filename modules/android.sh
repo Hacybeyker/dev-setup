@@ -133,11 +133,19 @@ android_update() {
   done 3< <(list_entries "$(android_data_dir)/skills.txt")
 }
 
+# Copias reales (no enlaces) en ~/.agents/skills de skills que Android Studio ya trae. Suele dejarlas
+# android init. Android Studio ve las dos y la de ~/.agents/skills no la actualiza nadie. Nunca se
+# borran: ~/.agents/skills también lo leen otros agentes.
 android_warn_duplicates() {
-  local name
+  local name hint
   while IFS= read -r name; do
     [ -n "$name" ] || continue
-    warn "$name está en ~/.agents/skills y en ~/.android-studio/skills: Android Studio la ve dos veces. Para quitar la copia: rm -rf ~/.agents/skills/$name"
+    hint="Si ningún otro agente usa ~/.agents/skills, quítala con: rm -rf ~/.agents/skills/$name"
+    if diff -rq "$HOME/.agents/skills/$name" "$HOME/.android-studio/skills/$name" >/dev/null 2>&1; then
+      info "$name también está copiada en ~/.agents/skills: Android Studio la ve dos veces y esa copia no se actualiza. $hint"
+    else
+      warn "$name en ~/.agents/skills es distinta de la que trae Android Studio, probablemente desactualizada, y Android Studio ve las dos. $hint"
+    fi
   done <<EOF_DUP
 $(android_duplicated_skills)
 EOF_DUP

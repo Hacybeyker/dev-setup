@@ -91,7 +91,7 @@ dev-setup **no rompe lo que ya funciona**:
 
 - Si algo ya está instalado, se haya instalado como se haya instalado, no lo reinstala, no lo mueve ni lo reemplaza: solo lo reporta. Antes de instalar cada herramienta del `Brewfile` busca el comando en el `PATH`, la app en `/Applications` o el JDK.
 - `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
-- Si una skill está copiada en `~/.agents/skills` y también en `~/.android-studio/skills`, `doctor` avisa que Android Studio la ve dos veces y te dice cómo quitar la copia; no la borra.
+- Si una skill que trae Android Studio también está copiada en `~/.agents/skills` (suele dejarla `android init`), `doctor` avisa que Android Studio la ve dos veces, si esa copia está desactualizada y cómo quitarla. No la borra: `~/.agents/skills` también lo leen otros agentes.
 - Nunca desinstala, nunca borra archivos, nunca usa `--force` y nunca llama a `sudo`: si algo lo necesita, te dice el comando.
 - Respeta tus valores de `JAVA_HOME`, `ANDROID_HOME` y `git config`.
 - En los archivos de configuración solo agrega lo que falta: antes hace un respaldo con fecha, te muestra el diff y te pide confirmación.
