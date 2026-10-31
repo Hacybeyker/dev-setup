@@ -43,7 +43,7 @@ dev-setup update   # Homebrew, Android CLI, SDK, skills, repos y plugins de Clau
 | Command Line Tools de Xcode | `git` y compiladores | `xcode-select --install` |
 | Homebrew | Gestor de paquetes | Instalador oficial |
 | `gh`, `jq`, `shellcheck`, `bats-core` | GitHub, JSON, análisis y tests de shell | `Brewfile` |
-| Temurin (LTS) | JDK para la terminal (`./gradlew`, Android CLI) | `Brewfile` |
+| Temurin 21 (LTS) | JDK para la terminal (`./gradlew`, Android CLI). Corre Gradle 8.5 en adelante; cada proyecto fija el suyo con toolchains | `Brewfile` |
 | JetBrains Toolbox | Instalar Android Studio y los demás IDEs de JetBrains | `Brewfile` |
 | Android CLI y SDK | Compilar, emuladores y skills oficiales de Android | Instalador oficial y `android sdk install` |
 | Claude Code | Agente de IA en la terminal | Instalador oficial |
@@ -65,7 +65,7 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 - **Claude Code:** `~/.claude/settings.json` (sin atribución de IA en commits ni PRs) y sus plugins.
 - **Gradle:** `~/.gradle/gradle.properties` con memoria y caché según la máquina.
 - **Android Studio:** memoria del IDE, si ya está instalado.
-- **Shell:** un único bloque marcado `# >>> dev-setup >>>` en `~/.zshrc` con el `PATH` y las variables necesarias.
+- **Shell:** un único bloque marcado `# >>> dev-setup >>>` en `~/.zshrc` (o `$ZDOTDIR/.zshrc`) con `~/.local/bin` en el `PATH`, Homebrew y `JAVA_HOME`. Cada línea respeta lo que ya tengas definido.
 - **Repos (opcional):** clona tus proyectos desde `repos.txt`.
 
 ## Qué no hace, y por qué
@@ -84,7 +84,8 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 
 dev-setup **no rompe lo que ya funciona**:
 
-- Si algo ya está instalado, se haya instalado como se haya instalado, no lo reinstala, no lo mueve ni lo reemplaza: solo lo reporta.
+- Si algo ya está instalado, se haya instalado como se haya instalado, no lo reinstala, no lo mueve ni lo reemplaza: solo lo reporta. Antes de instalar cada herramienta del `Brewfile` busca el comando en el `PATH`, la app en `/Applications` o el JDK.
+- `update` solo actualiza lo que Homebrew gestiona del `Brewfile`; lo instalado de otra forma se actualiza por su cuenta.
 - Nunca desinstala, nunca borra archivos y nunca usa `--force`.
 - Respeta tus valores de `JAVA_HOME`, `ANDROID_HOME` y `git config`.
 - En los archivos de configuración solo agrega lo que falta: antes hace un respaldo con fecha, te muestra el diff y te pide confirmación.

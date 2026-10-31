@@ -1,0 +1,7 @@
+# Brewfile de prueba: nombres que no existen en ninguna máquina real.
+brew "tool-managed"   # bin: tool-managed-bin
+brew "tool-external"  # bin: tool-external-bin
+brew "tool-missing"   # bin: tool-missing-bin
+cask "app-external"   # app: App External.app
+cask "jdk-external"   # jdk: 17
+cask "app-optional" if ENV.fetch("DEV_SETUP_AI_LOCAL", "0") == "1"  # app: App Optional.app
