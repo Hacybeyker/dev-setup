@@ -130,6 +130,7 @@ base_ensure_cli_link() {
   else
     run_cmd mkdir -p "$(dirname "$link")"
     run_cmd ln -s "$target" "$link"
+    is_dry_run || ok "Comando dev-setup en $link"
   fi
 }
 

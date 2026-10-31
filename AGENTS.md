@@ -64,7 +64,7 @@ Antes de dar una tarea por terminada:
 - Sin `sudo`: si un paso lo necesita (por ejemplo, `xcode-select -s`), se muestra el comando para que lo corra el usuario.
 - No se toca `~/.gradle/gradle.properties`: pisa la configuración de cada proyecto, que es la que también corre en el CI.
 - `repos.txt`: solo se clonan los repos que faltan. Nunca se hace pull ni se toca una carpeta que ya existe.
-- Sesiones: dev-setup nunca inicia sesión. Revisa con `gh auth status`, `claude auth status` y `android auth status` y lista lo que falta.
+- Sesiones: dev-setup nunca inicia sesión. Revisa con `gh auth status`, `claude auth status` y `android auth status`; los pasos pendientes listan solo los logins necesarios (gh y Claude Code), y la sesión opcional del Android CLI aparece solo en `doctor`.
 
 **Código:**
 
