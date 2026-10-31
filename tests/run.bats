@@ -39,3 +39,15 @@ setup() {
   run confirm "¿Seguro?"
   [ "$status" -eq 0 ]
 }
+
+@test "quote_cmd cita solo lo necesario y se puede pegar en la terminal" {
+  [ "$(quote_cmd brew install gh)" = "brew install gh" ]
+  [ "$(quote_cmd echo 'a b' '')" = "echo 'a b' ''" ]
+  eval "set -- $(quote_cmd "it's" 'x"$HOME' '~/a b' '')"
+  [ "$#" -eq 4 ]
+  [ "$1" = "it's" ]
+  # shellcheck disable=SC2016
+  [ "$2" = 'x"$HOME' ]
+  [ "$3" = '~/a b' ]
+  [ -z "$4" ]
+}

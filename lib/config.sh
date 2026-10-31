@@ -21,7 +21,7 @@ group_description() {
     ai-local) printf 'LM Studio, para modelos locales' ;;
     terminal) printf 'Warp' ;;
     node) printf 'nvm, Node.js LTS y pnpm' ;;
-    ios) printf 'aviso para instalar Xcode, para el target iOS de KMP' ;;
+    ios) printf 'revisa Xcode para el target iOS de KMP, sin instalar nada' ;;
   esac
 }
 
@@ -40,6 +40,12 @@ config_valid_entry() {
       case "$value" in 0 | 1) return 0 ;; *) return 1 ;; esac
     fi
   done
+  # Memoria máxima de Android Studio: un número y m o g, por ejemplo 6144m u 8g.
+  if [ "$key" = DEV_SETUP_STUDIO_XMX ]; then
+    case "${value%[mg]}" in '' | *[!0-9]*) return 1 ;; esac
+    [ "${value%[mg]}" != "$value" ]
+    return
+  fi
   return 1
 }
 

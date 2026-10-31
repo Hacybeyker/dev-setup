@@ -22,3 +22,6 @@ cask "lm-studio" if ENV.fetch("DEV_SETUP_AI_LOCAL", "0") == "1"  # app: LM Studi
 
 # Grupo terminal
 cask "warp" if ENV.fetch("DEV_SETUP_TERMINAL", "0") == "1"  # app: Warp.app
+
+# Grupo node (nvm y Node.js los instala el módulo node con el instalador oficial de nvm)
+brew "pnpm" if ENV.fetch("DEV_SETUP_NODE", "0") == "1"  # bin: pnpm

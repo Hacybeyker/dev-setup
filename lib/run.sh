@@ -3,11 +3,20 @@
 
 is_dry_run() { [ "${DEV_SETUP_DRY_RUN:-0}" = 1 ]; }
 
-# Devuelve el comando citado como se escribiría en la terminal.
+# Devuelve el comando citado como se escribiría en la terminal: entre comillas simples solo
+# los argumentos que lo necesitan.
 quote_cmd() {
-  local out="" arg
+  local out="" arg escaped q="'\\''"
   for arg in "$@"; do
-    out="$out $(printf '%q' "$arg")"
+    case "$arg" in
+      '') arg="''" ;;
+      *[!A-Za-z0-9_./:=@%+,-]*)
+        # Sin comillas dobles: así el Bash 3.2 de macOS trata la comilla del patrón igual que Bash 5.
+        escaped=${arg//\'/$q}
+        arg="'$escaped'"
+        ;;
+    esac
+    out="$out $arg"
   done
   printf '%s' "${out# }"
 }

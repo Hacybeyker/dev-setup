@@ -61,3 +61,21 @@ setup() {
   [[ "$output" != *"línea ignorada"* ]]
   [[ "$output" == *"node: no"* ]]
 }
+
+@test "DEV_SETUP_STUDIO_XMX acepta solo un numero con m o g" {
+  load_libs
+  config_valid_entry DEV_SETUP_STUDIO_XMX 6144m
+  config_valid_entry DEV_SETUP_STUDIO_XMX 8g
+  local bad
+  for bad in "" m 6144 6144mb 6g4m '$(touch x)'; do
+    run config_valid_entry DEV_SETUP_STUDIO_XMX "$bad"
+    [ "$status" -eq 1 ]
+  done
+}
+
+@test "local.env fija la memoria de Android Studio" {
+  load_libs
+  printf 'DEV_SETUP_STUDIO_XMX=5g\n' >"$DEV_SETUP_LOCAL_ENV"
+  config_load
+  [ "$DEV_SETUP_STUDIO_XMX" = 5g ]
+}

@@ -21,5 +21,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - `ANDROID_HOME`, `adb` y `emulator` en el bloque de `~/.zshrc`, respetando lo ya definido.
 - Módulo agents: clona agent-skills junto a dev-setup y corre su `install.sh`; instala testigo con su instalador oficial y `testigo setup`. `update` hace `git pull --ff-only` y solo actualiza testigo si lo instaló su instalador.
 - Módulo claude: Claude Code (instalador oficial; si se instaló con Homebrew, `update` lo actualiza con `brew upgrade`), marketplaces y plugins de `claude/` en scope user, y fusión de `~/.claude/settings.json` que conserva lo existente.
+- Módulo studio: memoria de Android Studio (`-Xmx`) según la RAM o `DEV_SETUP_STUDIO_XMX`, solo si `studio.vmoptions` no tiene una.
+- Grupo node: nvm (fijado a v0.40.8, sin tocar el perfil), Node.js LTS y pnpm. Respeta Node.js ya instalado y otros gestores (fnm, volta, mise, asdf).
+- Grupo ios: revisa Xcode y `xcode-select` y dice qué falta, sin correr `sudo`.
+- `--dry-run` muestra los comandos como se escriben en la terminal.
 
 [Unreleased]: https://github.com/Hacybeyker/dev-setup/commits/main
