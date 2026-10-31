@@ -83,3 +83,14 @@ ensure_block() {
   rm -f "$new"
   ok "$file actualizado"
 }
+
+# list_entries <archivo>: imprime las líneas útiles de una lista (sin comentarios ni líneas vacías).
+list_entries() {
+  local line
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="${line%"${line##*[![:space:]]}"}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    [ -z "$line" ] || printf '%s\n' "$line"
+  done <"$1"
+}

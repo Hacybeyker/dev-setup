@@ -17,5 +17,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Módulo base: Command Line Tools, Homebrew, el comando `dev-setup` en `~/.local/bin` y las herramientas del `Brewfile` (gh, jq, shellcheck, bats-core, Temurin 21, JetBrains Toolbox, y LM Studio y Warp en sus grupos). Lo que ya existe fuera de Homebrew se detecta y se respeta.
 - Bloque administrado en `~/.zshrc` con `~/.local/bin` en el `PATH`, Homebrew y `JAVA_HOME`, que respeta lo que el usuario ya tenga definido.
 - `update` actualiza solo lo que Homebrew gestiona del `Brewfile`.
+- Módulo android: Android CLI (instalador oficial, sin sudo), paquetes del SDK de `android/sdk-packages.txt` y skills oficiales de `android/skills.txt` para Claude Code. Avisa de las skills que Android Studio vería dos veces.
+- `ANDROID_HOME`, `adb` y `emulator` en el bloque de `~/.zshrc`, respetando lo ya definido.
 
 [Unreleased]: https://github.com/Hacybeyker/dev-setup/commits/main
