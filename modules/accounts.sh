@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 # Sesiones de gh, Claude Code y Android CLI. dev-setup nunca inicia sesión por ti: revisa con los
-# comandos de estado oficiales (salen con 0 si hay sesión) y te dice qué falta.
+# comandos de estado oficiales (salen con 0 si hay sesión) y te dice qué falta. La del Android CLI
+# es opcional: solo aparece en doctor, no en los pasos pendientes.
 
 gh_logged_in() { command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; }
 
@@ -45,8 +46,5 @@ accounts_next_steps() {
   fi
   if claude_cmd >/dev/null && ! claude_logged_in; then
     next_step "Inicia sesión en Claude Code: claude auth login"
-  fi
-  if android_cmd >/dev/null && ! android_logged_in; then
-    next_step "Opcional: android auth login, para las funciones del Android CLI que usan tu cuenta de Google"
   fi
 }

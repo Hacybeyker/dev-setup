@@ -82,16 +82,22 @@ config_apply_overrides() {
 
 # Pregunta por los grupos que aún no tienen valor. Sin terminal quedan desactivados.
 config_ask_groups() {
-  local group var
+  local group var asked=0 enabled=""
   for group in $DEV_SETUP_GROUPS; do
     var="$(group_var "$group")"
-    [ -z "${!var:-}" ] || continue
-    if ask_yes_no "¿Instalar el grupo opcional '$group' ($(group_description "$group"))?" n; then
-      printf -v "$var" '%s' 1
-    else
-      printf -v "$var" '%s' 0
+    if [ -z "${!var:-}" ]; then
+      asked=1
+      if ask_yes_no "¿Instalar el grupo opcional '$group' ($(group_description "$group"))?" n; then
+        printf -v "$var" '%s' 1
+      else
+        printf -v "$var" '%s' 0
+      fi
     fi
+    if group_enabled "$group"; then enabled="$enabled${enabled:+, }$group"; fi
   done
+  if [ "$asked" = 0 ]; then
+    info "Activos: ${enabled:-ninguno}. Se cambian con --with <grupo> y --without <grupo>"
+  fi
 }
 
 # config_set <clave> <valor>: actualiza o agrega la línea en local.env sin tocar las demás.
@@ -120,7 +126,7 @@ config_set() {
   fi
   run_cmd cp "$tmp" "$file"
   rm -f "$tmp"
-  log_to_file CONFIG "$key=$value"
+  ok "$key=$value guardado en $file"
 }
 
 # Guarda en local.env el valor de cada grupo que ya tenga uno.

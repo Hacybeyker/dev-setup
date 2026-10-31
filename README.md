@@ -76,7 +76,7 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 | No hace | Por qué | Qué hacer |
 | --- | --- | --- |
 | Instalar Android Studio | Se gestiona desde JetBrains Toolbox junto con los demás IDEs; dos vías de instalación se pisan | Instalarlo desde Toolbox mientras corre `bootstrap` |
-| Iniciar sesión en nada | Las credenciales nunca pasan por un script | Al final, `bootstrap` y `update` te listan solo los logins pendientes: `gh auth login`, `claude auth login` y, opcional, `android auth login`. `doctor` muestra el estado de cada sesión |
+| Iniciar sesión en nada | Las credenciales nunca pasan por un script | Al final, `bootstrap` y `update` te listan solo los logins pendientes: `gh auth login` y `claude auth login`. `doctor` muestra el estado de cada sesión, incluida la opcional del Android CLI (`android auth login`) |
 | Aceptar las licencias del SDK | Las aceptas tú | Se muestran durante `bootstrap` |
 | Restaurar secretos (keystores, `google-services.json`, tokens) | No van en un repo público | Desde tu gestor de contraseñas |
 | Instalar Xcode | Pide Apple ID y pesa unos 15 GB | Desde la App Store; con el grupo `ios`, `doctor` te dice qué falta |

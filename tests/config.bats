@@ -16,6 +16,7 @@ setup() {
 @test "--with y --without se guardan en local.env" {
   run "$DEV_SETUP" bootstrap --with node --without=ios
   [ "$status" -eq 0 ]
+  [[ "$output" == *"DEV_SETUP_NODE=1 guardado en"* ]]
   grep -qx 'DEV_SETUP_NODE=1' "$DEV_SETUP_LOCAL_ENV"
   grep -qx 'DEV_SETUP_IOS=0' "$DEV_SETUP_LOCAL_ENV"
 }
@@ -78,4 +79,11 @@ setup() {
   printf 'DEV_SETUP_STUDIO_XMX=5g\n' >"$DEV_SETUP_LOCAL_ENV"
   config_load
   [ "$DEV_SETUP_STUDIO_XMX" = 5g ]
+}
+
+@test "con los grupos ya elegidos no pregunta y dice cuales estan activos" {
+  printf 'DEV_SETUP_AI_LOCAL=0\nDEV_SETUP_TERMINAL=1\nDEV_SETUP_NODE=1\nDEV_SETUP_IOS=0\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Activos: terminal, node."* ]]
 }

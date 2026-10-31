@@ -24,7 +24,7 @@ setup() {
   accounts_next_steps
   [[ "$DEV_SETUP_NEXT_STEPS" == *"gh auth login"* ]]
   [[ "$DEV_SETUP_NEXT_STEPS" != *"claude auth login"* ]]
-  [[ "$DEV_SETUP_NEXT_STEPS" == *"Opcional: android auth login"* ]]
+  [[ "$DEV_SETUP_NEXT_STEPS" != *"android auth login"* ]]
 }
 
 @test "doctor muestra el estado de las sesiones" {
@@ -33,6 +33,8 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"GitHub (gh)"* ]]
   [[ "$output" == *"Claude Code: sin sesión"* ]]
+  FAKE_ANDROID_LOGGED_IN=0 run accounts_doctor
+  [[ "$output" == *"opcional: android auth login"* ]]
 }
 
 @test "bootstrap termina con lo que te toca y la segunda vez ya no pide abrir otra terminal" {

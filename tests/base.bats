@@ -69,6 +69,7 @@ setup() {
   run "$DEV_SETUP" bootstrap
   [ "$status" -eq 0 ]
   [ "$(readlink "$HOME/.local/bin/dev-setup")" = "$REPO_ROOT/bin/dev-setup" ]
+  [[ "$output" == *"Comando dev-setup en $HOME/.local/bin/dev-setup"* ]]
   run "$DEV_SETUP" doctor
   [[ "$output" == *"Comando dev-setup en $HOME/.local/bin/dev-setup"* ]]
 }
