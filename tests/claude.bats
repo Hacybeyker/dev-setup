@@ -74,7 +74,8 @@ setup() {
   [ "$(jq -r '.attribution.commit' "$SETTINGS")" = "" ]
   [ "$(jq -r '.attribution.sessionUrl' "$SETTINGS")" = false ]
   jq -e --arg d "$HOME/.claude/skills" '.permissions.additionalDirectories | index($d)' "$SETTINGS"
-  jq -e --arg d "$DEV_SETUP_AGENT_SKILLS_DIR/skills" '.permissions.additionalDirectories | index($d)' "$SETTINGS"
+  # install.sh enlaza con la ruta física (pwd -P): en macOS /var es un enlace a /private/var.
+  jq -e --arg d "$(cd "$DEV_SETUP_AGENT_SKILLS_DIR" && pwd -P)/skills" '.permissions.additionalDirectories | index($d)' "$SETTINGS"
 }
 
 @test "settings.json conserva lo que ya tienes y solo agrega lo que falta" {
