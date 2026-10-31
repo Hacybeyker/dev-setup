@@ -1,0 +1,3 @@
+# Marketplaces de plugins de Claude Code: <nombre> <origen en GitHub> [grupo opcional]
+claude-plugins-official anthropics/claude-plugins-official
+claude-code-warp warpdotdev/claude-code-warp terminal

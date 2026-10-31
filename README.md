@@ -46,7 +46,8 @@ dev-setup update   # Homebrew, Android CLI, SDK, skills, repos y plugins de Clau
 | Temurin 21 (LTS) | JDK para la terminal (`./gradlew`, Android CLI). Corre Gradle 8.5 en adelante; cada proyecto fija el suyo con toolchains | `Brewfile` |
 | JetBrains Toolbox | Instalar Android Studio y los demás IDEs de JetBrains | `Brewfile` |
 | Android CLI y SDK | Compilar y emular: platform-tools, emulator, cmdline-tools, build-tools, la última plataforma estable y su imagen de emulador (lista en `android/sdk-packages.txt`) | Instalador oficial y `android sdk install` |
-| Claude Code | Agente de IA en la terminal | Instalador oficial |
+| Claude Code y sus plugins | Agente de IA en la terminal, con los plugins de `claude/plugins.txt` | Instalador oficial y `claude plugin install` |
+| [testigo](https://github.com/Hacybeyker/testigo) | Pruebas E2E con evidencia sobre Maestro | Instalador oficial y `testigo setup` |
 
 ### Opcionales (se eligen la primera vez)
 
@@ -62,7 +63,8 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 ## Qué configura
 
 - **Skills de agentes:** las propias con el `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills), las oficiales de Android seleccionadas (`android/skills.txt`) con `android skills add`, solo para Claude Code porque Android Studio ya las trae todas, y [testigo](https://github.com/Hacybeyker/testigo) con `testigo setup`.
-- **Claude Code:** `~/.claude/settings.json` (sin atribución de IA en commits ni PRs) y sus plugins.
+- **Claude Code:** `~/.claude/settings.json` sin atribución de IA en commits ni PRs, y con permiso para leer las carpetas de skills. Solo agrega lo que falta: tus claves y valores se quedan como están.
+- **agent-skills:** lo clona junto a dev-setup (por ejemplo `~/Claude/agent-skills`) y corre su `install.sh`. Si la carpeta ya existe y no es un clon, no la toca.
 - **Gradle:** `~/.gradle/gradle.properties` con memoria y caché según la máquina.
 - **Android Studio:** memoria del IDE, si ya está instalado.
 - **Shell:** un único bloque marcado `# >>> dev-setup >>>` en `~/.zshrc` (o `$ZDOTDIR/.zshrc`) con `~/.local/bin` en el `PATH`, Homebrew, `JAVA_HOME`, `ANDROID_HOME` y las herramientas del SDK (`adb`, `emulator`). Cada línea respeta lo que ya tengas definido.

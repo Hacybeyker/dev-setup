@@ -1,0 +1,4 @@
+# Lista de prueba
+plugin-installed@market-installed
+plugin-missing@market-installed
+plugin-optional@market-optional terminal
