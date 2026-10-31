@@ -19,7 +19,7 @@ setup() {
   [ ! -e "$HOME/archivo" ]
 }
 
-@test "run_cmd devuelve el código de salida del comando" {
+@test "run_cmd devuelve el codigo de salida del comando" {
   run run_cmd sh -c 'exit 3'
   [ "$status" -eq 3 ]
 }

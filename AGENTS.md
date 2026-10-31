@@ -38,7 +38,7 @@ Antes de dar una tarea por terminada:
 - Lo propio de cada máquina no se versiona: `local.env` (grupos elegidos y ajustes) y `repos.txt` (repos a clonar, que pueden ser privados). Los `.example` documentan su formato.
 - Lo que mantiene otro repo se instala con su propio instalador, nunca se copia aquí: las skills propias con `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills) y `testigo` con `testigo setup`.
 - Logs en `~/Library/Logs/dev-setup/`, uno por ejecución de `bootstrap` o `update` (nunca en `doctor` ni en `--dry-run`).
-- `tests/*.bats` aíslan la máquina con un `HOME` temporal y las variables `DEV_SETUP_LOCAL_ENV`, `DEV_SETUP_NONINTERACTIVE` y `DEV_SETUP_SKIP_OS_CHECK`, que existen solo para los tests. El CI los corre en Linux y en macOS con el Bash 3.2 del sistema. Los nombres de test pueden llevar acentos: bats necesita un locale UTF-8, el que usa Terminal por defecto.
+- `tests/*.bats` aíslan la máquina con un `HOME` temporal y las variables `DEV_SETUP_LOCAL_ENV`, `DEV_SETUP_NONINTERACTIVE` y `DEV_SETUP_SKIP_OS_CHECK`, que existen solo para los tests. El CI los corre en Linux y en macOS con el Bash 3.2 del sistema. Los nombres de test van en ASCII, sin tildes: con el Bash 3.2 de macOS, bats no lee algunos caracteres (`tests/meta.bats` lo verifica).
 
 ## Base y grupos opcionales
 

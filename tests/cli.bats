@@ -20,7 +20,7 @@ setup() {
   [[ "$output" == *Uso:* ]]
 }
 
-@test "un subcomando o una opción desconocida sale con 2" {
+@test "un subcomando o una opcion desconocida sale con 2" {
   run "$DEV_SETUP" frob
   [ "$status" -eq 2 ]
   run "$DEV_SETUP" doctor --frob
@@ -32,7 +32,7 @@ setup() {
   [ "$status" -eq 2 ]
 }
 
-@test "--with rechaza un grupo inexistente o vacío" {
+@test "--with rechaza un grupo inexistente o vacio" {
   run "$DEV_SETUP" doctor --with frob
   [ "$status" -eq 2 ]
   [[ "$output" == *frob* ]]
@@ -40,27 +40,27 @@ setup() {
   [ "$status" -eq 2 ]
 }
 
-@test "--version imprime la versión" {
+@test "--version imprime la version" {
   run "$DEV_SETUP" --version
   [ "$status" -eq 0 ]
   [[ "$output" == "dev-setup "* ]]
 }
 
-@test "funciona invocado por un enlace simbólico" {
+@test "funciona invocado por un enlace simbolico" {
   mkdir -p "$HOME/.local/bin"
   ln -s "$DEV_SETUP" "$HOME/.local/bin/dev-setup"
   run "$HOME/.local/bin/dev-setup" --version
   [ "$status" -eq 0 ]
 }
 
-@test "doctor no crea ningún archivo" {
+@test "doctor no crea ningun archivo" {
   run "$DEV_SETUP" doctor --with node
   [ "$status" -eq 0 ]
   [ ! -e "$DEV_SETUP_LOCAL_ENV" ]
   [ -z "$(ls -A "$HOME")" ]
 }
 
-@test "bootstrap --dry-run no crea ningún archivo" {
+@test "bootstrap --dry-run no crea ningun archivo" {
   run "$DEV_SETUP" bootstrap --dry-run --with node
   [ "$status" -eq 0 ]
   [[ "$output" == *"[dry-run]"* ]]

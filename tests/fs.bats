@@ -49,7 +49,7 @@ backups() { find "$HOME" -name '.zshrc.bak-*' | wc -l | tr -d ' '; }
   [ "$(backups)" -eq 0 ]
 }
 
-@test "ensure_block sin confirmación no toca el archivo" {
+@test "ensure_block sin confirmacion no toca el archivo" {
   printf 'original\n' >"$FILE"
   DEV_SETUP_ASSUME_YES=0
   run ensure_block "$FILE" dev-setup 'export A=1'
@@ -58,7 +58,7 @@ backups() { find "$HOME" -name '.zshrc.bak-*' | wc -l | tr -d ' '; }
   [ "$(backups)" -eq 0 ]
 }
 
-@test "ensure_block se niega si el bloque está incompleto o repetido" {
+@test "ensure_block se niega si el bloque esta incompleto o repetido" {
   printf '# >>> dev-setup >>>\nexport A=1\n' >"$FILE"
   run ensure_block "$FILE" dev-setup 'export A=2'
   [ "$status" -eq 1 ]
@@ -71,7 +71,7 @@ backups() { find "$HOME" -name '.zshrc.bak-*' | wc -l | tr -d ' '; }
   cmp "$FILE" "$BATS_TEST_TMPDIR/repeated"
 }
 
-@test "ensure_block escribe a través de un enlace simbólico y conserva permisos" {
+@test "ensure_block escribe a traves de un enlace simbolico y conserva permisos" {
   mkdir -p "$HOME/dotfiles"
   printf 'original\n' >"$HOME/dotfiles/zshrc"
   chmod 600 "$HOME/dotfiles/zshrc"
