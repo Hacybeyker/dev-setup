@@ -1,0 +1,4 @@
+# Permite seguir los `source` entre bin/, lib/ y modules/ (rutas relativas a la raíz).
+external-sources=true
+source-path=SCRIPTDIR
+source-path=SCRIPTDIR/..

@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # bats-core fijado por tag y verificado por commit (Dependabot no lo actualiza).
+  BATS_VERSION: v1.14.0
+  BATS_COMMIT: eb7f42f8d608ac693d7a4b67474f6714ea68cfc5
+
 jobs:
   validate:
     runs-on: ubuntu-26.04
@@ -24,5 +29,34 @@ jobs:
           .venv/bin/pip install --quiet shellcheck-py==0.11.0.1
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
+      - name: Instalar bats-core
+        run: |
+          git clone --quiet --depth 1 --branch "$BATS_VERSION" https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats-core"
+          test "$(git -C "$RUNNER_TEMP/bats-core" rev-parse HEAD)" = "$BATS_COMMIT"
+          "$RUNNER_TEMP/bats-core/install.sh" "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
       - name: Analizar los scripts de shell
         run: git ls-files -z '*.sh' 'bin/*' | xargs -0 --no-run-if-empty shellcheck
+
+      - name: Correr los tests
+        run: bats tests
+
+  validate-macos:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Instalar bats-core
+        run: |
+          git clone --quiet --depth 1 --branch "$BATS_VERSION" https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats-core"
+          test "$(git -C "$RUNNER_TEMP/bats-core" rev-parse HEAD)" = "$BATS_COMMIT"
+          "$RUNNER_TEMP/bats-core/install.sh" "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # /bin primero en el PATH: los scripts corren con el Bash 3.2 de macOS, el mismo de una Mac nueva.
+      - name: Correr los tests con el Bash 3.2 de macOS
+        run: |
+          export PATH="/bin:$PATH"
+          bash --version | head -n 1
+          bats tests

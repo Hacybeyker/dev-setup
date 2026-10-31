@@ -26,6 +26,8 @@ dev-setup bootstrap --dry-run  # lo que haría, sin hacerlo
 dev-setup bootstrap            # instala solo lo que falta
 ```
 
+Todas las opciones: `dev-setup --help`. Con `-y` acepta las confirmaciones sin preguntar.
+
 ### Día a día
 
 ```bash
