@@ -28,9 +28,12 @@ readonly DEV_SETUP_ROOT
 . "$DEV_SETUP_ROOT/lib/fs.sh"
 # shellcheck source=lib/config.sh
 . "$DEV_SETUP_ROOT/lib/config.sh"
+# shellcheck source=lib/shell.sh
+. "$DEV_SETUP_ROOT/lib/shell.sh"
 
-# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install y _update.
-DEV_SETUP_MODULES="system"
+# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update
+# y _shell (las líneas que aporta al bloque de ~/.zshrc).
+DEV_SETUP_MODULES="system base"
 for module in $DEV_SETUP_MODULES; do
   # shellcheck source=/dev/null
   . "$DEV_SETUP_ROOT/modules/$module.sh"
@@ -82,6 +85,7 @@ cmd_doctor() {
   config_load
   config_apply_overrides
   run_modules doctor
+  shell_doctor
 }
 
 cmd_bootstrap() {
@@ -93,6 +97,7 @@ cmd_bootstrap() {
   config_ask_groups
   config_save_groups
   run_modules install
+  shell_apply
   finish
 }
 
@@ -103,6 +108,7 @@ cmd_update() {
   config_apply_overrides
   config_save_groups
   run_modules update
+  shell_apply
   finish
 }
 

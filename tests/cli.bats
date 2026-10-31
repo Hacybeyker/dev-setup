@@ -54,18 +54,20 @@ setup() {
 }
 
 @test "doctor no crea ningun archivo" {
+  find "$HOME" | sort >"$BATS_TEST_TMPDIR/before"
   run "$DEV_SETUP" doctor --with node
   [ "$status" -eq 0 ]
   [ ! -e "$DEV_SETUP_LOCAL_ENV" ]
-  [ -z "$(ls -A "$HOME")" ]
+  find "$HOME" | sort | cmp - "$BATS_TEST_TMPDIR/before"
 }
 
 @test "bootstrap --dry-run no crea ningun archivo" {
+  find "$HOME" | sort >"$BATS_TEST_TMPDIR/before"
   run "$DEV_SETUP" bootstrap --dry-run --with node
   [ "$status" -eq 0 ]
   [[ "$output" == *"[dry-run]"* ]]
   [ ! -e "$DEV_SETUP_LOCAL_ENV" ]
-  [ -z "$(ls -A "$HOME")" ]
+  find "$HOME" | sort | cmp - "$BATS_TEST_TMPDIR/before"
 }
 
 @test "bootstrap fuera de macOS y sin --dry-run se niega" {
