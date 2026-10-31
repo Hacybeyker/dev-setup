@@ -84,7 +84,8 @@ Antes de dar una tarea por terminada:
 ## Versionado y release
 
 - SemVer con tags `vX.Y.Z` y `CHANGELOG.md` según Keep a Changelog. Cada cambio agrega su entrada en `[Unreleased]`.
-- El comando de instalación remota del README y `DEV_SETUP_REF` de `install.sh` apuntan siempre al último tag publicado: se fijan en el PR del release.
+- El comando de instalación remota del README y `DEV_SETUP_REF` de `install.sh` apuntan siempre al último tag publicado (`tests/meta.bats` lo verifica).
+- Release: un PR `chore(release): vX.Y.Z` que pasa `[Unreleased]` a la nueva versión del CHANGELOG y fija el tag en el README y en `install.sh`. Al mergearlo, tag anotado sobre ese commit y release de GitHub con las notas de esa versión.
 
 ## Seguridad
 

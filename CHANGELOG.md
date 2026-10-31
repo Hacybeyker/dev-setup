@@ -6,27 +6,23 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-31
+
+Primera versión publicada.
+
 ### Added
 
-- Estructura base del repo: reglas para agentes (`AGENTS.md`), CI con `shellcheck`, Dependabot, `.editorconfig` y `.gitignore`.
-- README con el alcance de `v1.0.0`: qué instala, qué configura, qué no hace y qué garantiza.
-- CLI `dev-setup` con los subcomandos `doctor`, `bootstrap` y `update` y las opciones `--dry-run`, `--yes`, `--with` y `--without`. Todavía sin módulos de instalación.
-- Grupos opcionales (`ai-local`, `terminal`, `node`, `ios`) guardados en `local.env`, que se lee sin ejecutarse.
-- Cambios seguros en archivos: respaldo con fecha, diff, confirmación y bloque administrado.
-- Tests con bats-core y CI en macOS con el Bash 3.2 del sistema.
-- Módulo base: Command Line Tools, Homebrew, el comando `dev-setup` en `~/.local/bin` y las herramientas del `Brewfile` (gh, jq, shellcheck, bats-core, Temurin 21, JetBrains Toolbox, y LM Studio y Warp en sus grupos). Lo que ya existe fuera de Homebrew se detecta y se respeta.
-- Bloque administrado en `~/.zshrc` con `~/.local/bin` en el `PATH`, Homebrew y `JAVA_HOME`, que respeta lo que el usuario ya tenga definido.
-- `update` actualiza solo lo que Homebrew gestiona del `Brewfile`.
-- Módulo android: Android CLI (instalador oficial, sin sudo), paquetes del SDK de `android/sdk-packages.txt` y skills oficiales de `android/skills.txt` para Claude Code. Avisa de las copias en `~/.agents/skills` de skills que Android Studio ya trae (las vería dos veces) y de si están desactualizadas, sin borrarlas.
-- `ANDROID_HOME`, `adb` y `emulator` en el bloque de `~/.zshrc`, respetando lo ya definido.
-- Módulo agents: clona agent-skills junto a dev-setup y corre su `install.sh`; instala testigo con su instalador oficial y `testigo setup`. `update` hace `git pull --ff-only` y solo actualiza testigo si lo instaló su instalador.
-- Módulo claude: Claude Code (instalador oficial; si se instaló con Homebrew, `update` lo actualiza con `brew upgrade`), marketplaces y plugins de `claude/` en scope user, y fusión de `~/.claude/settings.json` que conserva lo existente.
-- Módulo studio: memoria de Android Studio (`-Xmx`) según la RAM o `DEV_SETUP_STUDIO_XMX`, solo si `studio.vmoptions` no tiene una.
-- Grupo node: nvm (fijado a v0.40.8, sin tocar el perfil), Node.js LTS y pnpm. Respeta Node.js ya instalado y otros gestores (fnm, volta, mise, asdf).
-- Grupo ios: revisa Xcode y `xcode-select` y dice qué falta, sin correr `sudo`.
-- `--dry-run` muestra los comandos como se escriben en la terminal.
-- `install.sh`: entrada remota para una Mac nueva (también por pipe). Instala las Command Line Tools, clona dev-setup en la versión del instalador y corre `bootstrap`. No toca una carpeta que ya existe.
-- Módulo repos: clona los repos de `repos.txt` que faltan, sin pull y sin tocar carpetas que ya existen.
-- "Lo que te toca" al final de `bootstrap` y `update`: logins pendientes (gh y Claude Code), Android Studio, Xcode, repos sin clonar y abrir una terminal nueva. `doctor` muestra el estado de las sesiones.
+- CLI `dev-setup` para macOS (Apple silicon) con `doctor` (solo lectura), `bootstrap` y `update`, y las opciones `--dry-run`, `--yes`, `--with` y `--without`. Compatible con el Bash 3.2 del sistema.
+- `install.sh`: instalación en una Mac nueva con un solo comando (`curl ... | bash`). Instala las Command Line Tools, clona dev-setup en el tag publicado y corre `bootstrap`.
+- Base: Homebrew y las herramientas del `Brewfile` (gh, jq, shellcheck, bats-core, Temurin 21 y JetBrains Toolbox). Lo instalado fuera de Homebrew se detecta y se respeta.
+- Android: Android CLI, paquetes del SDK de `android/sdk-packages.txt`, skills oficiales de `android/skills.txt` para Claude Code y memoria de Android Studio según la RAM.
+- Agentes: Claude Code con los plugins y marketplaces de `claude/`, `~/.claude/settings.json` sin atribución de IA (fusionado, conserva lo existente), agent-skills y testigo con sus propios instaladores.
+- Grupos opcionales guardados en `local.env`: `ai-local` (LM Studio), `terminal` (Warp y su plugin para Claude Code), `node` (nvm, Node.js LTS y pnpm) e `ios` (revisión de Xcode).
+- `repos.txt`: clona los repos propios que faltan, sin pull y sin tocar carpetas que ya existen.
+- Bloque administrado en `~/.zshrc` (`PATH`, Homebrew, `JAVA_HOME`, `ANDROID_HOME`, herramientas del SDK y nvm) que respeta lo ya definido.
+- "Lo que te toca" al final de `bootstrap` y `update` con los pasos manuales pendientes, y estado de las sesiones en `doctor`.
+- Cambios seguros: nunca desinstala, borra, usa `--force` ni `sudo`. En los archivos de configuración solo agrega lo que falta, con respaldo, diff y confirmación. Todo queda en `~/Library/Logs/dev-setup/`.
+- Tests con bats-core y CI en Linux y en macOS con el Bash 3.2 del sistema.
 
-[Unreleased]: https://github.com/Hacybeyker/dev-setup/commits/main
+[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Hacybeyker/dev-setup/releases/tag/v1.0.0
