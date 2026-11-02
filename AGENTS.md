@@ -76,7 +76,7 @@ Antes de dar una tarea por terminada:
 
 ## Git
 
-- Commits: Conventional Commits, en español, sin emoji. El módulo va como scope (`feat(android): ...`).
+- Commits: Conventional Commits, en español, sin emoji. El módulo va como scope (`feat(android): ...`). Título de 72 caracteres como máximo.
 - Rama principal: `main`, protegida. Se trabaja en ramas cortas `<tipo>/<descripción>` y se integra por PR con squash.
 - La IA commitea solo cuando se le pide y nunca agrega atribución de IA.
 - Pide aprobación antes de `git push`, de crear un release y de publicar.

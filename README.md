@@ -34,6 +34,17 @@ Todas las opciones: `dev-setup --help`. Con `-y` acepta las confirmaciones sin p
 dev-setup update   # Homebrew, Android CLI, SDK, skills, plugins de Claude Code, nvm y los repos que falten
 ```
 
+### Pasar a una versión nueva de dev-setup
+
+`dev-setup update` actualiza tus herramientas, no dev-setup. El instalador deja el clon fijo en la versión que instalaste; para pasar a otra (están en [Releases](https://github.com/Hacybeyker/dev-setup/releases)), cambia el clon a su tag:
+
+```bash
+git -C ~/Claude/dev-setup fetch --tags
+git -C ~/Claude/dev-setup checkout vX.Y.Z
+```
+
+Usa la carpeta de `DEV_SETUP_DIR` si elegiste otra. Tu `local.env` y tu `repos.txt` no cambian: no se versionan. Si clonaste dev-setup a mano en la rama `main`, basta con `git -C ~/Claude/dev-setup pull`.
+
 ## Qué instala
 
 ### Base (siempre)
