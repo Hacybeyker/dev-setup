@@ -34,14 +34,47 @@ android_installed_packages() {
   '
 }
 
-android_skill_agents() { printf '%s' "${DEV_SETUP_ANDROID_SKILL_AGENTS:-$ANDROID_SKILL_AGENTS_DEFAULT}"; }
+ANDROID_UNKNOWN_AGENTS=""
+
+# Agentes elegidos, separados por comas, sin android-studio: Android Studio ya trae todas las oficiales.
+android_skill_agents() {
+  local agent list=""
+  for agent in $(printf '%s' "${DEV_SETUP_ANDROID_SKILL_AGENTS:-$ANDROID_SKILL_AGENTS_DEFAULT}" | tr ',' ' '); do
+    [ "$agent" = android-studio ] || list="$list${list:+,}$agent"
+  done
+  printf '%s' "$list"
+}
+
+android_skill_agents_label() {
+  local agents
+  agents="$(android_skill_agents)"
+  printf '%s' "${agents:-ningún agente}"
+}
+
+android_warn_ignored_agents() {
+  case ",${DEV_SETUP_ANDROID_SKILL_AGENTS:-}," in
+    *,android-studio,*) warn "android-studio se omite en DEV_SETUP_ANDROID_SKILL_AGENTS: Android Studio ya trae las skills oficiales" ;;
+  esac
+}
+
+# Un agente que el CLI no reconoce se salta: no detiene bootstrap ni update.
+android_warn_unknown_agent() {
+  warn "Android CLI no reconoce el agente '$1' de DEV_SETUP_ANDROID_SKILL_AGENTS: se salta. Los nombres válidos salen con: android skills list --agent=$1"
+  case ", $ANDROID_UNKNOWN_AGENTS," in
+    *", $1,"*) ;;
+    *) ANDROID_UNKNOWN_AGENTS="$ANDROID_UNKNOWN_AGENTS${ANDROID_UNKNOWN_AGENTS:+, }$1" ;;
+  esac
+}
 
 # Un agente por línea.
-android_skill_agent_list() { printf '%s\n' "$(android_skill_agents)" | tr ',' '\n'; }
+android_skill_agent_list() {
+  local agent
+  for agent in $(android_skill_agents | tr ',' ' '); do printf '%s\n' "$agent"; done
+}
 
 # Salida de `android skills list --agent=<agente>`: un bloque por skill instalada, con el nombre solo en su
-# primera línea. Vacía si el CLI falta o falla.
-android_installed_skills() { "$1" skills list "--agent=$2" 2>/dev/null || true; }
+# primera línea. Falla si el CLI no reconoce el agente (sale con 1).
+android_installed_skills() { "$1" skills list "--agent=$2" 2>/dev/null; }
 
 # skill_in_list <skill> <salida de android_installed_skills>
 skill_in_list() { printf '%s\n' "$2" | grep -qxF -- "$1"; }
@@ -103,14 +136,20 @@ android_install_sdk() {
 
 android_install_skills() {
   local android agent agent_skills skill
-  android="$(android_cmd)" || android=android
+  # Sin CLI (solo pasa en --dry-run, antes de instalarlo) todas las skills faltan.
+  android="$(android_cmd)" || android=""
+  android_warn_ignored_agents
   while IFS= read -r agent <&4; do
-    agent_skills="$(android_installed_skills "$android" "$agent")"
+    agent_skills=""
+    if [ -n "$android" ] && ! agent_skills="$(android_installed_skills "$android" "$agent")"; then
+      android_warn_unknown_agent "$agent"
+      continue
+    fi
     while IFS= read -r skill <&3; do
       if skill_in_list "$skill" "$agent_skills"; then
         ok "$skill ya está para $agent"
       else
-        run_cmd "$android" skills add "--agent=$agent" "$skill"
+        run_cmd "${android:-android}" skills add "--agent=$agent" "$skill"
       fi
     done 3< <(list_entries "$(android_data_dir)/skills.txt")
   done 4< <(android_skill_agent_list)
@@ -121,7 +160,7 @@ android_install() {
   android_ensure_cli
   section "SDK de Android"
   android_install_sdk
-  section "Skills oficiales de Android ($(android_skill_agents))"
+  section "Skills oficiales de Android ($(android_skill_agents_label))"
   android_install_skills
   android_warn_duplicates
 }
@@ -142,8 +181,12 @@ android_update() {
       warn "$package: falta, corre dev-setup bootstrap"
     fi
   done 3< <(list_entries "$(android_data_dir)/sdk-packages.txt")
+  android_warn_ignored_agents
   while IFS= read -r agent <&4; do
-    agent_skills="$(android_installed_skills "$android" "$agent")"
+    if ! agent_skills="$(android_installed_skills "$android" "$agent")"; then
+      android_warn_unknown_agent "$agent"
+      continue
+    fi
     while IFS= read -r skill <&3; do
       skill_in_list "$skill" "$agent_skills" || continue
       run_cmd "$android" skills update "--agent=$agent" "$skill"
@@ -156,6 +199,15 @@ android_update() {
 # borran: ~/.agents/skills también lo leen otros agentes.
 android_warn_duplicates() {
   local name hint
+  # Con common, las copias de ~/.agents/skills son una elección: un solo aviso, sin sugerir borrarlas.
+  case ",$(android_skill_agents)," in
+    *,common,*)
+      if [ -n "$(android_duplicated_skills)" ]; then
+        info "Con common, Android Studio ve dos veces las skills oficiales de ~/.agents/skills"
+      fi
+      return 0
+      ;;
+  esac
   while IFS= read -r name; do
     [ -n "$name" ] || continue
     hint="Si ningún otro agente usa ~/.agents/skills, quítala con: rm -rf ~/.agents/skills/$name"
@@ -170,6 +222,9 @@ EOF_DUP
 }
 
 android_next_steps() {
+  if [ -n "$ANDROID_UNKNOWN_AGENTS" ]; then
+    next_step "Corrige DEV_SETUP_ANDROID_SKILL_AGENTS en local.env: Android CLI no reconoce $ANDROID_UNKNOWN_AGENTS"
+  fi
   if ! android_studio_app >/dev/null; then
     next_step "Instala Android Studio desde JetBrains Toolbox, ábrelo una vez y corre dev-setup update para ajustar su memoria"
   fi
@@ -206,12 +261,16 @@ android_doctor() {
     if printf '%s\n' "$installed" | grep -qxF -- "$package"; then ok "$package"; else warn "$package: falta"; fi
   done 3< <(list_entries "$(android_data_dir)/sdk-packages.txt")
 
-  section "Skills oficiales de Android ($(android_skill_agents))"
+  section "Skills oficiales de Android ($(android_skill_agents_label))"
   if [ -z "${android:-}" ]; then
     warn "Sin Android CLI no se pueden revisar"
   else
+    android_warn_ignored_agents
     while IFS= read -r agent <&4; do
-      agent_skills="$(android_installed_skills "$android" "$agent")"
+      if ! agent_skills="$(android_installed_skills "$android" "$agent")"; then
+        android_warn_unknown_agent "$agent"
+        continue
+      fi
       while IFS= read -r skill <&3; do
         if skill_in_list "$skill" "$agent_skills"; then ok "$skill ($agent)"; else warn "$skill: falta para $agent"; fi
       done 3< <(list_entries "$(android_data_dir)/skills.txt")

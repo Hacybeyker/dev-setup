@@ -72,7 +72,13 @@ if [ "$1 ${2:-}" = "sdk list" ]; then
   echo "Available packages:"
   echo "  pkg/missing-1                  1.0.0    No instalado"
 fi
-# Como el CLI real: un bloque por skill instalada para el agente, con el nombre en la primera línea.
+# Como el CLI real: un agente desconocido sale con 1, y skills list da un bloque por skill instalada para
+# el agente, con el nombre en la primera línea.
+case "${1:-} ${3:-}" in
+  "skills --agent="*)
+    case " ${FAKE_ANDROID_INVALID_AGENTS:-} " in *" ${3#--agent=} "*) echo "Invalid agent: ${3#--agent=}." >&2; exit 1 ;; esac
+    ;;
+esac
 if [ "$1 ${2:-}" = "skills list" ]; then
   for pair in $FAKE_ANDROID_SKILLS; do
     [ "--agent=${pair%%:*}" = "${3:-}" ] && printf '%s\nDescripcion de %s.\n\n' "${pair#*:}" "${pair#*:}"

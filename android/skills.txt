@@ -1,7 +1,7 @@
 # Skills oficiales de Android (https://github.com/android/skills) que instala dev-setup para los agentes de
 # DEV_SETUP_ANDROID_SKILL_AGENTS en local.env (por defecto, solo Claude Code).
-# Android Studio ya trae todas las oficiales en ~/.android-studio/skills: por eso nunca se instalan para
-# android-studio ni en ~/.agents/skills, que Android Studio también lee y las vería dos veces.
+# Android Studio ya trae todas las oficiales en ~/.android-studio/skills: android-studio se omite, y common
+# (~/.agents/skills, que Android Studio también lee) solo conviene para un agente sin nombre propio.
 # La selección sigue el catálogo de agent-skills (se omite testing-setup: choca con el perfil hb-stack).
 android-cli
 navigation-3

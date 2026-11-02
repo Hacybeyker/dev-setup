@@ -8,7 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ### Added
 
-- Android: `DEV_SETUP_ANDROID_SKILL_AGENTS` en `local.env` elige para qué agentes se instalan las skills oficiales (por defecto, `claude-code`).
+- Android: `DEV_SETUP_ANDROID_SKILL_AGENTS` en `local.env` elige para qué agentes se instalan las skills oficiales (por defecto, `claude-code`). `android-studio` se omite con un aviso y un agente que el CLI no reconoce se salta sin detener `bootstrap` ni `update`.
 
 ### Changed
 
