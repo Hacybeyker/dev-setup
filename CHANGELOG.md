@@ -6,6 +6,14 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+### Added
+
+- Android: `DEV_SETUP_ANDROID_SKILL_AGENTS` en `local.env` elige para qué agentes se instalan las skills oficiales (por defecto, `claude-code`).
+
+### Changed
+
+- Android: `bootstrap`, `update` y `doctor` revisan cada skill oficial por agente con `android skills list --agent`, en vez de buscarla en `~/.claude/skills`.
+
 ## [1.0.0] - 2026-10-31
 
 Primera versión publicada.

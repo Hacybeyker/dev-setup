@@ -62,7 +62,7 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 
 ## Qué configura
 
-- **Skills de agentes:** las propias con el `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills), las oficiales de Android seleccionadas (`android/skills.txt`) con `android skills add`, solo para Claude Code porque Android Studio ya las trae todas, y [testigo](https://github.com/Hacybeyker/testigo) con `testigo setup`.
+- **Skills de agentes:** las propias con el `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills), las oficiales de Android seleccionadas (`android/skills.txt`) con `android skills add`, para los agentes que elijas en `local.env` (`DEV_SETUP_ANDROID_SKILL_AGENTS`; por defecto, solo Claude Code) y nunca para Android Studio, que ya las trae todas, y [testigo](https://github.com/Hacybeyker/testigo) con `testigo setup`.
 - **Claude Code:** `~/.claude/settings.json` sin atribución de IA en commits ni PRs, y con permiso para leer las carpetas de skills. Solo agrega lo que falta: tus claves y valores se quedan como están.
 - **agent-skills:** lo clona junto a dev-setup (por ejemplo `~/Claude/agent-skills`) y corre su `install.sh`. Si la carpeta ya existe y no es un clon, no la toca.
 - **Android Studio:** memoria del IDE (`-Xmx` en `studio.vmoptions`) según la RAM: 4 GB con menos de 32 GB, 6 GB desde 32 GB y 8 GB desde 64 GB, o el valor de `DEV_SETUP_STUDIO_XMX` en `local.env`. Si ya tiene uno (por ejemplo, puesto desde *Settings → Memory Settings*), lo respeta. Hace falta haber abierto Android Studio una vez.
@@ -88,7 +88,7 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 dev-setup **no rompe lo que ya funciona**:
 
 - Si algo ya está instalado, se haya instalado como se haya instalado, no lo reinstala, no lo mueve ni lo reemplaza: solo lo reporta. Antes de instalar cada herramienta del `Brewfile` busca el comando en el `PATH`, la app en `/Applications` o el JDK.
-- `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
+- `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` (para los agentes donde ya están) y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
 - Si una skill que trae Android Studio también está copiada en `~/.agents/skills` (suele dejarla `android init`), `doctor` avisa que Android Studio la ve dos veces, si esa copia está desactualizada y cómo quitarla. No la borra: `~/.agents/skills` también lo leen otros agentes.
 - Nunca desinstala, nunca borra archivos, nunca usa `--force` y nunca llama a `sudo`: si algo lo necesita, te dice el comando.
 - Respeta tus valores de `JAVA_HOME`, `ANDROID_HOME` y `git config`.

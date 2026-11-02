@@ -32,8 +32,9 @@ setup_env() {
   export FAKE_BREW_FORMULAE="tool-managed"
   export FAKE_BREW_CASKS=""
   export FAKE_JDKS="17"
-  # Android: pkg-installed está en el SDK y skill-installed, en ~/.claude/skills.
+  # Android: pkg-installed está en el SDK y skill-installed, instalada para Claude Code (agente:skill).
   export FAKE_SDK_INSTALLED="pkg-installed"
+  export FAKE_ANDROID_SKILLS="claude-code:skill-installed"
   mkdir -p "$HOME/.claude/skills/skill-installed"
   printf -- '---\nname: skill-installed\n---\n' >"$HOME/.claude/skills/skill-installed/SKILL.md"
   make_stub brew <<'STUB'
@@ -70,6 +71,12 @@ if [ "$1 ${2:-}" = "sdk list" ]; then
   echo ""
   echo "Available packages:"
   echo "  pkg/missing-1                  1.0.0    No instalado"
+fi
+# Como el CLI real: un bloque por skill instalada para el agente, con el nombre en la primera línea.
+if [ "$1 ${2:-}" = "skills list" ]; then
+  for pair in $FAKE_ANDROID_SKILLS; do
+    [ "--agent=${pair%%:*}" = "${3:-}" ] && printf '%s\nDescripcion de %s.\n\n' "${pair#*:}" "${pair#*:}"
+  done
 fi
 [ "$1" != -V ] || echo "1.1.0"
 if [ "$1 ${2:-}" = "auth status" ]; then [ "${FAKE_ANDROID_LOGGED_IN:-1}" = 1 ] || exit 1; fi

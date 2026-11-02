@@ -25,6 +25,36 @@ setup() {
   [ "$(grep -c 'android skills add' "$FAKE_LOG")" -eq 1 ]
 }
 
+@test "con varios agentes en local.env, bootstrap instala solo para los que faltan" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude-code,github-copilot\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  grep -qx 'android skills add --agent=claude-code skill-missing' "$FAKE_LOG"
+  grep -qx 'android skills add --agent=github-copilot skill-installed' "$FAKE_LOG"
+  grep -qx 'android skills add --agent=github-copilot skill-missing' "$FAKE_LOG"
+  [ "$(grep -c 'android skills add' "$FAKE_LOG")" -eq 3 ]
+}
+
+@test "update actualiza cada skill solo para los agentes donde ya esta" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude-code,github-copilot\n' >"$DEV_SETUP_LOCAL_ENV"
+  export FAKE_ANDROID_SKILLS="claude-code:skill-installed github-copilot:skill-missing"
+  run "$DEV_SETUP" update
+  [ "$status" -eq 0 ]
+  grep -qx 'android skills update --agent=claude-code skill-installed' "$FAKE_LOG"
+  grep -qx 'android skills update --agent=github-copilot skill-missing' "$FAKE_LOG"
+  [ "$(grep -c 'android skills update' "$FAKE_LOG")" -eq 2 ]
+}
+
+@test "doctor muestra para que agente falta cada skill" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude-code,github-copilot\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" doctor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skills oficiales de Android (claude-code,github-copilot)"* ]]
+  [[ "$output" == *"✔ skill-installed (claude-code)"* ]]
+  [[ "$output" == *"skill-installed: falta para github-copilot"* ]]
+  [ "$(grep -c 'android skills add' "$FAKE_LOG")" -eq 0 ]
+}
+
 @test "bootstrap nunca usa android init, que instala la skill en todos los agentes" {
   run "$DEV_SETUP" bootstrap
   [ "$status" -eq 0 ]
@@ -86,13 +116,14 @@ setup() {
   [[ "$output" == *"Android Studio: $HOME/Applications/Android Studio.app"* ]]
 }
 
-@test "respeta CLAUDE_CONFIG_DIR al buscar las skills" {
-  export CLAUDE_CONFIG_DIR="$BATS_TEST_TMPDIR/claude"
-  mkdir -p "$CLAUDE_CONFIG_DIR/skills/skill-missing"
-  touch "$CLAUDE_CONFIG_DIR/skills/skill-missing/SKILL.md"
+@test "las skills se revisan con android skills list, no buscando carpetas" {
+  mkdir -p "$HOME/.claude/skills/skill-missing"
+  touch "$HOME/.claude/skills/skill-missing/SKILL.md"
   run "$DEV_SETUP" doctor
-  [[ "$output" == *"✔ skill-missing"* ]]
-  [[ "$output" == *"skill-installed: falta"* ]]
+  [ "$status" -eq 0 ]
+  grep -qx 'android skills list --agent=claude-code' "$FAKE_LOG"
+  [[ "$output" == *"✔ skill-installed (claude-code)"* ]]
+  [[ "$output" == *"skill-missing: falta para claude-code"* ]]
 }
 
 @test "las listas reales de Android son validas" {

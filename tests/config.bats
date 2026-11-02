@@ -28,6 +28,14 @@ setup() {
   [ "$(grep -c 'DEV_SETUP_NODE' "$DEV_SETUP_LOCAL_ENV")" -eq 0 ]
 }
 
+@test "local.env ignora una lista de agentes invalida y usa claude-code" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude code\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" doctor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"DEV_SETUP_ANDROID_SKILL_AGENTS=claude code"* ]]
+  [[ "$output" == *"Skills oficiales de Android (claude-code)"* ]]
+}
+
 @test "bootstrap dos veces no cambia local.env" {
   "$DEV_SETUP" bootstrap --with node >/dev/null
   cp "$DEV_SETUP_LOCAL_ENV" "$BATS_TEST_TMPDIR/first"
