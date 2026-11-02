@@ -11,7 +11,7 @@ CLI que instala, diagnostica y actualiza un entorno de desarrollo **Android y Ko
 Una Mac limpia no tiene `git`, así que el arranque es un solo comando que descarga el instalador de una versión probada:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/v1.1.0/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/v1.1.1/install.sh | bash
 ```
 
 Instala las Command Line Tools (traen `git`), clona este repo en `~/Claude/dev-setup` en la versión del instalador y corre `dev-setup bootstrap`, que instala Homebrew y todo lo demás y deja el comando `dev-setup` en `~/.local/bin`. Tarda entre 30 y 60 minutos, casi todo en descargas. Al final te lista lo que te toca a ti, como los logins.

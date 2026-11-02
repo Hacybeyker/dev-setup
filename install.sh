@@ -18,7 +18,7 @@ set -euo pipefail
 
 main() {
   # El release fija aquí el tag publicado.
-  local ref="${DEV_SETUP_REF:-v1.1.0}"
+  local ref="${DEV_SETUP_REF:-v1.1.1}"
   local repo_url="${DEV_SETUP_REPO_URL:-https://github.com/Hacybeyker/dev-setup.git}"
   local dir="${DEV_SETUP_DIR:-$HOME/Claude/dev-setup}"
 
