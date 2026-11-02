@@ -1,7 +1,9 @@
 # shellcheck shell=bash
-# Android: Android CLI, paquetes del SDK, skills oficiales para Claude Code y el entorno de la terminal.
+# Android: Android CLI, paquetes del SDK, skills oficiales para los agentes elegidos y el entorno de la terminal.
 
-ANDROID_SKILL_AGENTS="claude-code"
+# Agentes de las skills oficiales: DEV_SETUP_ANDROID_SKILL_AGENTS en local.env, con los nombres de
+# `android skills list` (claude-code, github-copilot...). Por defecto solo Claude Code, que es parte de la base.
+ANDROID_SKILL_AGENTS_DEFAULT="claude-code"
 
 android_data_dir() { printf '%s' "${DEV_SETUP_ANDROID_DATA:-$DEV_SETUP_ROOT/android}"; }
 claude_skills_dir() { printf '%s/skills' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"; }
@@ -32,7 +34,17 @@ android_installed_packages() {
   '
 }
 
-skill_installed_for_claude() { [ -f "$(claude_skills_dir)/$1/SKILL.md" ]; }
+android_skill_agents() { printf '%s' "${DEV_SETUP_ANDROID_SKILL_AGENTS:-$ANDROID_SKILL_AGENTS_DEFAULT}"; }
+
+# Un agente por línea.
+android_skill_agent_list() { printf '%s\n' "$(android_skill_agents)" | tr ',' '\n'; }
+
+# Salida de `android skills list --agent=<agente>`: un bloque por skill instalada, con el nombre solo en su
+# primera línea. Vacía si el CLI falta o falla.
+android_installed_skills() { "$1" skills list "--agent=$2" 2>/dev/null || true; }
+
+# skill_in_list <skill> <salida de android_installed_skills>
+skill_in_list() { printf '%s\n' "$2" | grep -qxF -- "$1"; }
 
 android_studio_app() {
   local app
@@ -90,15 +102,18 @@ android_install_sdk() {
 }
 
 android_install_skills() {
-  local android skill
+  local android agent agent_skills skill
   android="$(android_cmd)" || android=android
-  while IFS= read -r skill <&3; do
-    if skill_installed_for_claude "$skill"; then
-      ok "$skill ya está para Claude Code"
-    else
-      run_cmd "$android" skills add "--agent=$ANDROID_SKILL_AGENTS" "$skill"
-    fi
-  done 3< <(list_entries "$(android_data_dir)/skills.txt")
+  while IFS= read -r agent <&4; do
+    agent_skills="$(android_installed_skills "$android" "$agent")"
+    while IFS= read -r skill <&3; do
+      if skill_in_list "$skill" "$agent_skills"; then
+        ok "$skill ya está para $agent"
+      else
+        run_cmd "$android" skills add "--agent=$agent" "$skill"
+      fi
+    done 3< <(list_entries "$(android_data_dir)/skills.txt")
+  done 4< <(android_skill_agent_list)
 }
 
 android_install() {
@@ -106,13 +121,13 @@ android_install() {
   android_ensure_cli
   section "SDK de Android"
   android_install_sdk
-  section "Skills oficiales de Android (Claude Code)"
+  section "Skills oficiales de Android ($(android_skill_agents))"
   android_install_skills
   android_warn_duplicates
 }
 
 android_update() {
-  local android installed package skill
+  local android installed package agent agent_skills skill
   section "Android"
   if ! android="$(android_cmd)"; then
     warn "Falta Android CLI: corre dev-setup bootstrap"
@@ -127,10 +142,13 @@ android_update() {
       warn "$package: falta, corre dev-setup bootstrap"
     fi
   done 3< <(list_entries "$(android_data_dir)/sdk-packages.txt")
-  while IFS= read -r skill <&3; do
-    skill_installed_for_claude "$skill" || continue
-    run_cmd "$android" skills update "--agent=$ANDROID_SKILL_AGENTS" "$skill"
-  done 3< <(list_entries "$(android_data_dir)/skills.txt")
+  while IFS= read -r agent <&4; do
+    agent_skills="$(android_installed_skills "$android" "$agent")"
+    while IFS= read -r skill <&3; do
+      skill_in_list "$skill" "$agent_skills" || continue
+      run_cmd "$android" skills update "--agent=$agent" "$skill"
+    done 3< <(list_entries "$(android_data_dir)/skills.txt")
+  done 4< <(android_skill_agent_list)
 }
 
 # Copias reales (no enlaces) en ~/.agents/skills de skills que Android Studio ya trae. Suele dejarlas
@@ -158,7 +176,7 @@ android_next_steps() {
 }
 
 android_doctor() {
-  local android installed package skill app version
+  local android installed package agent agent_skills skill app version
   section "Android"
   if android="$(android_cmd)"; then
     version="$("$android" -V 2>/dev/null | head -n 1 || true)"
@@ -188,10 +206,17 @@ android_doctor() {
     if printf '%s\n' "$installed" | grep -qxF -- "$package"; then ok "$package"; else warn "$package: falta"; fi
   done 3< <(list_entries "$(android_data_dir)/sdk-packages.txt")
 
-  section "Skills oficiales de Android (Claude Code)"
-  while IFS= read -r skill <&3; do
-    if skill_installed_for_claude "$skill"; then ok "$skill"; else warn "$skill: falta"; fi
-  done 3< <(list_entries "$(android_data_dir)/skills.txt")
+  section "Skills oficiales de Android ($(android_skill_agents))"
+  if [ -z "${android:-}" ]; then
+    warn "Sin Android CLI no se pueden revisar"
+  else
+    while IFS= read -r agent <&4; do
+      agent_skills="$(android_installed_skills "$android" "$agent")"
+      while IFS= read -r skill <&3; do
+        if skill_in_list "$skill" "$agent_skills"; then ok "$skill ($agent)"; else warn "$skill: falta para $agent"; fi
+      done 3< <(list_entries "$(android_data_dir)/skills.txt")
+    done 4< <(android_skill_agent_list)
+  fi
   android_warn_duplicates
 }
 

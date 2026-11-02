@@ -40,6 +40,11 @@ config_valid_entry() {
       case "$value" in 0 | 1) return 0 ;; *) return 1 ;; esac
     fi
   done
+  # Agentes de las skills oficiales de Android: nombres separados por comas, sin espacios.
+  if [ "$key" = DEV_SETUP_ANDROID_SKILL_AGENTS ]; then
+    case "$value" in '' | ,* | *, | *,,* | *[![:lower:][:digit:],-]*) return 1 ;; esac
+    return 0
+  fi
   # Memoria máxima de Android Studio: un número y m o g, por ejemplo 6144m u 8g.
   if [ "$key" = DEV_SETUP_STUDIO_XMX ]; then
     case "${value%[mg]}" in '' | *[!0-9]*) return 1 ;; esac
