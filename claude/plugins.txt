@@ -1,9 +1,28 @@
-# Plugins de Claude Code que instala dev-setup (scope user): <plugin>@<marketplace> [grupo opcional]
-# Por qué está cada uno: CATALOG.md de https://github.com/Hacybeyker/agent-skills
+# Plugins de Claude Code que instala dev-setup (scope user) y actualiza `dev-setup update`.
+# Formato: <plugin>@<marketplace> [grupo]. Con grupo, solo se instala si ese grupo opcional está activo.
+# Cada marketplace va en marketplaces.txt.
+
+# Diagnósticos y navegación de código Kotlin (servidor de JetBrains). En alpha: Android experimental, KMP aún sin soporte.
 kotlin-lsp@claude-plugins-official
+# Documentación actualizada de librerías por versión (MCP de Upstash).
 context7@claude-plugins-official
+# Agentes de review especializados: segunda pasada después de hb-review.
 pr-review-toolkit@claude-plugins-official
+# Avisos de seguridad al editar y revisión del diff al final de cada turno (consume tokens).
 security-guidance@claude-plugins-official
+# Auditar y mejorar CLAUDE.md y AGENTS.md.
 claude-md-management@claude-plugins-official
+# Flujo genérico de features para proyectos sin AGENTS.md.
 feature-dev@claude-plugins-official
+# Notificaciones de Warp cuando Claude Code necesita input. Solo con el grupo terminal.
 warp@claude-code-warp terminal
+
+# Quitados a propósito:
+# - code-review: redundante con pr-review-toolkit y hb-review.
+# - commit-commands: choca con hb-commit.
+# - github: lo cubre el CLI gh.
+# - claude-code-setup: es de uso único.
+# - swift-lsp: casi no se escribe Swift.
+# Cuando hagan falta: typescript-lsp y pyright-lsp (web y backend), jdtls-lsp (Spring Boot en Java)
+# y plugin-dev (para empaquetar skills como plugin).
+# Descartado: el MCP de Maestro, porque testigo-flows exige usar Maestro solo con su entorno local.

@@ -77,6 +77,7 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 | Iniciar sesión en nada | Las credenciales nunca pasan por un script | Al final, `bootstrap` y `update` te listan solo los logins pendientes: `gh auth login` y `claude auth login`. `doctor` muestra el estado de cada sesión, incluida la opcional del Android CLI (`android auth login`) |
 | Aceptar las licencias del SDK | Las aceptas tú | Se muestran durante `bootstrap` |
 | Restaurar secretos (keystores, `google-services.json`, tokens) | No van en un repo público | Desde tu gestor de contraseñas |
+| Gestionar lo que sincroniza tu cuenta de claude.ai (skills y plugins de Anthropic) | Llega desde tu cuenta, no desde esta máquina | Para no cargarlo en Claude Code: `"syncClaudeAiSkills": false` o `"syncClaudeAiPlugins": false` en `~/.claude/settings.json` |
 | Instalar Xcode | Pide Apple ID y pesa unos 15 GB | Desde la App Store; con el grupo `ios`, `doctor` te dice qué falta |
 | Configurar Gradle en `~/.gradle/gradle.properties` | Ese archivo pisa el `gradle.properties` de cada proyecto y no existe en el CI: el mismo repo compilaría distinto en cada lado | La memoria, la caché y el configuration cache van en el `gradle.properties` de cada repo |
 | Cambiar tu versión de Node.js | Cada proyecto decide la suya | `nvm install --lts` cuando lo decidas |

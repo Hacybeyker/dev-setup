@@ -13,6 +13,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 ### Changed
 
 - Android: `bootstrap`, `update` y `doctor` revisan cada skill oficial por agente con `android skills list --agent`, en vez de buscarla en `~/.claude/skills`.
+- Claude Code: `claude/plugins.txt` explica para qué está cada plugin y cuáles se quitaron, quedan para cuando hagan falta o se descartaron.
+- README: aclara que dev-setup no gestiona lo que sincroniza la cuenta de claude.ai y cómo dejar de cargarlo en Claude Code.
 
 ## [1.0.0] - 2026-10-31
 
