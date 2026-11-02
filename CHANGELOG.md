@@ -6,6 +6,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-01
+
 ### Changed
 
 - README: cómo pasar a una versión nueva de dev-setup, ya que `dev-setup update` actualiza las herramientas y no el propio dev-setup.
@@ -44,6 +46,7 @@ Primera versión publicada.
 - Cambios seguros: nunca desinstala, borra, usa `--force` ni `sudo`. En los archivos de configuración solo agrega lo que falta, con respaldo, diff y confirmación. Todo queda en `~/Library/Logs/dev-setup/`.
 - Tests con bats-core y CI en Linux y en macOS con el Bash 3.2 del sistema.
 
-[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Hacybeyker/dev-setup/releases/tag/v1.0.0
