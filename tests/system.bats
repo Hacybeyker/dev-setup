@@ -52,7 +52,8 @@ clone_at() {
 }
 
 @test "en una rama, como main, no avisa aunque el commit tenga un tag" {
-  git -C "$ORIGIN" checkout --quiet -b main v1.1.0
+  # -B: la rama main puede existir ya si git crea los repos con main por defecto.
+  git -C "$ORIGIN" checkout --quiet -B main v1.1.0
   clone_at main
   run dev_setup_newer_release
   [ "$status" -eq 1 ]
