@@ -143,3 +143,54 @@ setup() {
   run list_entries "$BATS_TEST_TMPDIR/lista"
   [ "$output" = "$(printf 'uno\ndos')" ]
 }
+
+@test "un agente que el CLI no reconoce se salta con aviso y bootstrap sigue" {
+  export FAKE_ANDROID_INVALID_AGENTS=copylot
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude-code,copylot\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"no reconoce el agente 'copylot'"* ]]
+  grep -qx 'android skills add --agent=claude-code skill-missing' "$FAKE_LOG"
+  [ "$(grep -c 'skills add --agent=copylot' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" == *"Lo que te toca"*"Android CLI no reconoce copylot"* ]]
+  [[ "$output" == *"==> Shell"* ]]
+}
+
+@test "doctor y update avisan del agente desconocido en vez de marcar las skills como faltantes" {
+  export FAKE_ANDROID_INVALID_AGENTS=copylot
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=copylot\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" doctor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"no reconoce el agente 'copylot'"* ]]
+  [[ "$output" != *"falta para copylot"* ]]
+  run "$DEV_SETUP" update
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'skills update --agent=copylot' "$FAKE_LOG")" -eq 0 ]
+}
+
+@test "android-studio se omite con un aviso" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=android-studio,claude-code\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"android-studio se omite"* ]]
+  [[ "$output" == *"Skills oficiales de Android (claude-code)"* ]]
+  [ "$(grep -c -- '--agent=android-studio' "$FAKE_LOG")" -eq 0 ]
+}
+
+@test "con common, las copias de ~/.agents/skills dan un solo aviso y no sugieren borrarlas" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude-code,common\n' >"$DEV_SETUP_LOCAL_ENV"
+  mkdir -p "$HOME/.agents/skills/skill-installed" "$HOME/.android-studio/skills/skill-installed"
+  run "$DEV_SETUP" doctor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Con common, Android Studio ve dos veces"* ]]
+  [[ "$output" != *"rm -rf ~/.agents/skills"* ]]
+}
+
+@test "si solo queda android-studio, no instala skills para ningun agente" {
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=android-studio\n' >"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skills oficiales de Android (ningún agente)"* ]]
+  [[ "$output" != *"no reconoce"* ]]
+  [ "$(grep -c 'android skills' "$FAKE_LOG")" -eq 0 ]
+}
