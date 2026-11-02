@@ -13,11 +13,6 @@ nvm_installed_version() {
   (. "$(nvm_dir)/nvm.sh" --no-use >/dev/null 2>&1 && nvm --version) 2>/dev/null || true
 }
 
-# version_lt <a> <b>: a es menor que b (versiones X.Y.Z).
-version_lt() {
-  [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -t. -k1,1n -k2,2n -k3,3n | head -n 1)" = "$1" ]
-}
-
 # Versiones de Node.js instaladas con nvm, separadas por espacios.
 node_versions_in_nvm() {
   local dir list=""

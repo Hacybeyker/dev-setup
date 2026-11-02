@@ -103,3 +103,8 @@ list_entries() {
 
 # in_lines <valor> <líneas>: 0 si el valor es exactamente una de las líneas.
 in_lines() { printf '%s\n' "$2" | grep -qxF -- "$1"; }
+
+# version_lt <a> <b>: a es menor que b (versiones X.Y.Z).
+version_lt() {
+  [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -t. -k1,1n -k2,2n -k3,3n | head -n 1)" = "$1" ]
+}

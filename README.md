@@ -36,7 +36,7 @@ dev-setup update   # Homebrew, Android CLI, SDK, skills, plugins de Claude Code,
 
 ### Pasar a una versión nueva de dev-setup
 
-`dev-setup update` actualiza tus herramientas, no dev-setup. El instalador deja el clon fijo en la versión que instalaste; para pasar a otra (están en [Releases](https://github.com/Hacybeyker/dev-setup/releases)), cambia el clon a su tag:
+`dev-setup update` actualiza tus herramientas, no dev-setup. El instalador deja el clon fijo en la versión que instalaste, y `doctor`, `bootstrap` y `update` te avisan cuando sale una nueva, con los comandos exactos para pasar a ella. Sin conexión no dicen nada. Para pasar a otra versión (están en [Releases](https://github.com/Hacybeyker/dev-setup/releases)), cambia el clon a su tag:
 
 ```bash
 git -C ~/Claude/dev-setup fetch --tags

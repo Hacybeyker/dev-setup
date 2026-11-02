@@ -23,6 +23,7 @@ setup_env() {
   export DEV_SETUP_AGENT_SKILLS_REPO="$BATS_TEST_TMPDIR/agent-skills-origin"
   export DEV_SETUP_REPOS="$BATS_TEST_TMPDIR/repos.txt"
   export DEV_SETUP_RAM_GIB=16
+  export DEV_SETUP_UPDATE_CHECK=0 DEV_SETUP_UPDATE_CHECK_TIMEOUT=2
   export DEV_SETUP_XCODE_APP="$BATS_TEST_TMPDIR/Xcode.app"
   unset CLAUDE_CONFIG_DIR JAVA_HOME ANDROID_HOME NVM_DIR DEV_SETUP_STUDIO_XMX
   export FAKE_LOG="$BATS_TEST_TMPDIR/calls.log"
@@ -158,6 +159,8 @@ SCRIPT
 make_stub() {
   { printf '#!/usr/bin/env bash\n'; cat; } >"$STUBS/$1"
   chmod +x "$STUBS/$1"
+  # Bash recuerda dónde encontró cada comando: sin esto, un comando ya usado ignora el falso nuevo.
+  hash -r
 }
 
 # Carga las librerías y módulos para probar sus funciones directamente.
@@ -169,7 +172,7 @@ load_libs() {
     . "$REPO_ROOT/lib/$lib.sh"
   done
   local module
-  for module in base android studio agents claude node ios accounts repos; do
+  for module in system base android studio agents claude node ios accounts repos; do
     # shellcheck source=/dev/null
     . "$REPO_ROOT/modules/$module.sh"
   done

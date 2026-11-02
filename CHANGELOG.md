@@ -6,6 +6,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+### Added
+
+- `doctor`, `bootstrap` y `update` avisan cuando hay una versión nueva de dev-setup y muestran los comandos para pasar a ella. Solo si el clon está fijo en un tag, como lo deja `install.sh`; sin conexión no dicen nada.
+
 ## [1.1.1] - 2026-11-01
 
 ### Changed
