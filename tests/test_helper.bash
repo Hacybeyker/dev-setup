@@ -120,10 +120,17 @@ STUB
 printf 'testigo %s\n' "$*" >>"$FAKE_LOG"
 exit 0
 STUB
-  # Red de seguridad: ningún test descarga nada.
+  # Red de seguridad: ningún test descarga nada. Con FAKE_INSTALLER_SCRIPT, curl "descarga" ese archivo en
+  # la ruta de -o; sin él, falla como sin conexión.
   make_stub curl <<'STUB'
 printf 'curl %s\n' "$*" >>"$FAKE_LOG"
-exit 1
+if [ -z "${FAKE_INSTALLER_SCRIPT:-}" ]; then echo "curl: (6) Could not resolve host" >&2; exit 6; fi
+out=""
+while [ $# -gt 0 ]; do
+  [ "$1" != -o ] || out="$2"
+  shift
+done
+cp "$FAKE_INSTALLER_SCRIPT" "$out"
 STUB
   make_fake_agent_skills "$DEV_SETUP_AGENT_SKILLS_DIR"
   make_stub tool-external-bin <<'STUB'

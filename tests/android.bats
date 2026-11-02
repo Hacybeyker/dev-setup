@@ -194,3 +194,12 @@ setup() {
   [[ "$output" != *"no reconoce"* ]]
   [ "$(grep -c 'android skills' "$FAKE_LOG")" -eq 0 ]
 }
+
+@test "si no se puede descargar el Android CLI, bootstrap salta el SDK y sigue" {
+  rm "$STUBS/android"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No se pudo descargar"*"Sin Android CLI se saltan el SDK"* ]]
+  [[ "$output" == *"==> Shell"* ]]
+  [[ "$output" == *"Lo que te toca"*"no se pudo descargar https://dl.google.com/android/cli/"* ]]
+}

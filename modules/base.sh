@@ -91,7 +91,7 @@ base_ensure_homebrew() {
     return 0
   fi
   info "Instalando Homebrew con su instalador oficial (pide tu contraseña de macOS)"
-  run_cmd /bin/bash -c "/bin/bash -c \"\$(curl -fsSL $HOMEBREW_INSTALL_URL)\""
+  run_remote_installer "$HOMEBREW_INSTALL_URL" || die "No se pudo instalar Homebrew, y sin él no se puede seguir"
   is_dry_run && return 0
   brew="$(brew_cmd)" || die "Homebrew no quedó instalado; revisa el mensaje de su instalador"
   eval "$("$brew" shellenv)"
