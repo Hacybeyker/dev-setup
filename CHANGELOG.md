@@ -6,6 +6,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+### Changed
+
+- README: cómo pasar a una versión nueva de dev-setup, ya que `dev-setup update` actualiza las herramientas y no el propio dev-setup.
+
 ### Fixed
 
 - Instaladores oficiales (Homebrew, Android CLI, testigo, Claude Code y nvm): una descarga fallida ya no pasa por instalación exitosa. Se descargan a un archivo antes de correrlos; si algo falla, dev-setup lo avisa, lo deja en "Lo que te toca" y, salvo con Homebrew, sigue con lo demás.
