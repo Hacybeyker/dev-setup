@@ -158,3 +158,13 @@ setup() {
   run accounts_doctor <"$BATS_TEST_TMPDIR/stdin"
   [[ "$output" == *"✔ Claude Code"* ]]
 }
+
+@test "si no se puede descargar Claude Code, bootstrap salta sus plugins y sigue" {
+  rm "$STUBS/claude"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No se pudo descargar https://claude.ai/install.sh"* ]]
+  [[ "$output" == *"Sin Claude Code se saltan sus plugins"* ]]
+  [ "$(grep -c 'plugin install' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" == *"==> Shell"* ]]
+}

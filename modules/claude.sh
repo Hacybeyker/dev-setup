@@ -98,8 +98,12 @@ claude_ensure_cli() {
     return 0
   fi
   info "Instalando Claude Code con su instalador oficial (se actualiza solo)"
-  run_cmd /bin/bash -c "curl -fsSL $CLAUDE_INSTALL_URL | bash" </dev/null
-  is_dry_run || info "La primera vez, inicia sesión con: claude"
+  run_remote_installer "$CLAUDE_INSTALL_URL" </dev/null || return 1
+  is_dry_run && return 0
+  if ! claude_cmd >/dev/null; then
+    warn "Claude Code no quedó instalado; revisa el mensaje de su instalador"
+    return 1
+  fi
 }
 
 # Cask de Homebrew con la que se instaló Claude Code, si fue así (no se actualiza sola).
@@ -142,11 +146,16 @@ claude_install_plugins() {
 }
 
 claude_install() {
+  local cli=1
   section "Claude Code"
-  claude_ensure_cli
+  claude_ensure_cli || cli=0
   claude_ensure_settings
   section "Plugins de Claude Code"
-  claude_install_plugins
+  if [ "$cli" = 1 ]; then
+    claude_install_plugins
+  else
+    warn "Sin Claude Code se saltan sus plugins"
+  fi
 }
 
 claude_update() {

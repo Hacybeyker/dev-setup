@@ -11,9 +11,8 @@ setup() {
 
 # Instalador falso de nvm: crea nvm.sh y registra con qué PROFILE corrió.
 stub_nvm_installer() {
-  make_stub curl <<'STUB'
-printf 'curl %s\n' "$*" >>"$FAKE_LOG"
-cat <<'SCRIPT'
+  export FAKE_INSTALLER_SCRIPT="$BATS_TEST_TMPDIR/nvm-install.sh"
+  cat >"$FAKE_INSTALLER_SCRIPT" <<'SCRIPT'
 printf 'profile=%s\n' "$PROFILE" >>"$FAKE_LOG"
 cat >"$NVM_DIR/nvm.sh" <<'NVM'
 nvm() {
@@ -24,7 +23,6 @@ nvm() {
 }
 NVM
 SCRIPT
-STUB
 }
 
 # make_fake_nvm <versión> [git]: un nvm ya instalado.
@@ -53,7 +51,7 @@ NVM
   stub_nvm_installer
   run node_install
   [ "$status" -eq 0 ]
-  grep -q "^curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh$" "$FAKE_LOG"
+  grep -q "^curl -fsSL -o .* https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh$" "$FAKE_LOG"
   grep -qx 'profile=/dev/null' "$FAKE_LOG"
   grep -qx 'nvm install --lts' "$FAKE_LOG"
 }

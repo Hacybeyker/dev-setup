@@ -103,3 +103,10 @@ setup() {
     [ -z "$group" ] || is_group "$(group_name_from_var "$group")"
   done < <(brewfile_entries)
 }
+
+@test "si no se puede descargar Homebrew, bootstrap se detiene con un mensaje claro" {
+  rm "$STUBS/brew"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"No se pudo descargar"*"Homebrew/install"*"No se pudo instalar Homebrew"* ]]
+}

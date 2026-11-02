@@ -110,9 +110,12 @@ android_ensure_cli() {
     return 0
   fi
   info "Instalando Android CLI con su instalador oficial (sin sudo, en ~/.local/bin)"
-  run_cmd /bin/bash -c "curl -fsSL $(android_cli_install_url) | bash"
+  run_remote_installer "$(android_cli_install_url)" || return 1
   is_dry_run && return 0
-  android="$(android_cmd)" || die "Android CLI no quedó instalado; revisa el mensaje de su instalador"
+  if ! android="$(android_cmd)"; then
+    warn "Android CLI no quedó instalado; revisa el mensaje de su instalador"
+    return 1
+  fi
   ok "Android CLI: $android"
 }
 
@@ -157,7 +160,10 @@ android_install_skills() {
 
 android_install() {
   section "Android"
-  android_ensure_cli
+  if ! android_ensure_cli; then
+    warn "Sin Android CLI se saltan el SDK y las skills oficiales"
+    return 0
+  fi
   section "SDK de Android"
   android_install_sdk
   section "Skills oficiales de Android ($(android_skill_agents_label))"

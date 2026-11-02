@@ -44,9 +44,10 @@ node_other_manager() {
 
 # Instala nvm en nvm_dir, fijado a NVM_VERSION. PROFILE=/dev/null evita que toque ~/.zshrc.
 nvm_run_installer() {
-  # shellcheck disable=SC2016
-  run_cmd /bin/bash -c 'set -o pipefail; mkdir -p "$1" && curl -fsSL "$2" | NVM_DIR="$1" PROFILE=/dev/null bash' \
-    _ "$(nvm_dir)" "$NVM_INSTALL_URL" || warn "No se pudo instalar nvm $NVM_VERSION"
+  if ! run_cmd mkdir -p "$(nvm_dir)" ||
+    ! run_remote_installer "$NVM_INSTALL_URL" "NVM_DIR=$(nvm_dir)" PROFILE=/dev/null; then
+    warn "No se pudo instalar nvm $NVM_VERSION"
+  fi
 }
 
 node_install() {

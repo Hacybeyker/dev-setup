@@ -70,7 +70,7 @@ setup() {
   cp "$STUBS/testigo" "$HOME/.testigo/cli/1.0/bin/testigo"
   ln -s "$HOME/.testigo/cli/1.0/bin/testigo" "$HOME/.local/bin/testigo"
   run "$DEV_SETUP" update
-  grep -q '^curl -fsSL https://raw.githubusercontent.com/Hacybeyker/testigo/HEAD/install.sh' "$FAKE_LOG"
+  grep -q '^curl -fsSL -o .* https://raw.githubusercontent.com/Hacybeyker/testigo/HEAD/install.sh$' "$FAKE_LOG"
 }
 
 @test "update avisa si git pull no puede avanzar sin merge y vuelve a enlazar" {
@@ -94,4 +94,13 @@ setup() {
   run "$DEV_SETUP" update
   [ "$status" -eq 0 ]
   [ -f "$DEV_SETUP_AGENT_SKILLS_DIR/NUEVO.md" ]
+}
+
+@test "si no se puede descargar testigo, no corre testigo setup y sigue" {
+  rm "$STUBS/testigo"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Sin testigo se salta testigo setup"* ]]
+  [ "$(grep -c 'testigo setup' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" == *"==> Shell"* ]]
 }

@@ -51,3 +51,35 @@ setup() {
   [ "$3" = '~/a b' ]
   [ -z "$4" ]
 }
+
+@test "run_remote_installer descarga el instalador y lo corre con las variables indicadas" {
+  export FAKE_INSTALLER_SCRIPT="$BATS_TEST_TMPDIR/instalador.sh"
+  printf 'printf "corrio con X=%%s\\n" "$X" >>"$FAKE_LOG"\n' >"$FAKE_INSTALLER_SCRIPT"
+  run run_remote_installer https://example.com/install.sh X=1
+  [ "$status" -eq 0 ]
+  grep -q '^curl -fsSL -o .* https://example.com/install.sh$' "$FAKE_LOG"
+  grep -qx 'corrio con X=1' "$FAKE_LOG"
+}
+
+@test "si la descarga falla, run_remote_installer no corre nada y deja un paso pendiente" {
+  run run_remote_installer https://example.com/install.sh
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"No se pudo descargar https://example.com/install.sh"* ]]
+  if run_remote_installer https://example.com/install.sh 2>/dev/null; then false; fi
+  [[ "$DEV_SETUP_NEXT_STEPS" == *"no se pudo descargar https://example.com/install.sh"* ]]
+}
+
+@test "si el instalador falla, run_remote_installer devuelve su codigo" {
+  export FAKE_INSTALLER_SCRIPT="$BATS_TEST_TMPDIR/instalador.sh"
+  printf 'exit 3\n' >"$FAKE_INSTALLER_SCRIPT"
+  run run_remote_installer https://example.com/install.sh
+  [ "$status" -eq 3 ]
+  [[ "$output" == *"falló (código 3)"* ]]
+}
+
+@test "en dry-run, run_remote_installer solo anuncia la descarga" {
+  DEV_SETUP_DRY_RUN=1 run run_remote_installer https://example.com/install.sh X=1
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[dry-run] curl -fsSL https://example.com/install.sh | X=1 bash"* ]]
+  [ ! -s "$FAKE_LOG" ]
+}

@@ -59,7 +59,14 @@ agents_ensure_testigo() {
     return 0
   fi
   info "Instalando testigo con su instalador oficial (sin sudo)"
-  run_cmd /bin/bash -c "curl -fsSL $TESTIGO_INSTALL_URL | bash"
+  if ! run_remote_installer "$TESTIGO_INSTALL_URL"; then
+    warn "Sin testigo se salta testigo setup"
+    return 0
+  fi
+  if ! is_dry_run && [ ! -x "$HOME/.local/bin/testigo" ]; then
+    warn "testigo no quedó instalado; revisa el mensaje de su instalador"
+    return 0
+  fi
   info "testigo setup prepara Java, Maestro y el SDK que falten, con tu confirmación"
   run_cmd "$HOME/.local/bin/testigo" setup
 }
@@ -83,7 +90,7 @@ agents_update() {
   fi
   section "testigo"
   if testigo_from_installer; then
-    run_cmd /bin/bash -c "curl -fsSL $TESTIGO_INSTALL_URL | bash"
+    run_remote_installer "$TESTIGO_INSTALL_URL" || warn "No se pudo actualizar testigo"
   elif testigo_cmd >/dev/null; then
     info "testigo instalado de otra forma: se actualiza por su cuenta"
   else
