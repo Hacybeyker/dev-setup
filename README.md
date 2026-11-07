@@ -31,7 +31,7 @@ Todas las opciones: `dev-setup --help`. Con `-y` acepta las confirmaciones sin p
 ### Día a día
 
 ```bash
-dev-setup update   # Homebrew, Android CLI, SDK, skills, plugins de Claude Code, nvm y los repos que falten
+dev-setup update   # Homebrew, Android CLI, SDK, skills, trace_processor, plugins de Claude Code, nvm y los repos que falten
 ```
 
 ### Pasar a una versión nueva de dev-setup
@@ -59,6 +59,7 @@ Usa la carpeta de `DEV_SETUP_DIR` si elegiste otra. Tu `local.env` y tu `repos.t
 | Android CLI y SDK | Compilar y emular: platform-tools, emulator, cmdline-tools, build-tools, la última plataforma estable y su imagen de emulador (lista en `android/sdk-packages.txt`) | Instalador oficial y `android sdk install` |
 | Claude Code y sus plugins | Agente de IA en la terminal, con los plugins de `claude/plugins.txt` | Instalador oficial y `claude plugin install` |
 | [testigo](https://github.com/Hacybeyker/testigo) | Pruebas E2E con evidencia sobre Maestro | Instalador oficial y `testigo setup` |
+| `trace_processor` de [Perfetto](https://perfetto.dev) | Analizar trazas de rendimiento con SQL; lo usa la skill `hb-performance` de agent-skills | Script oficial (`get.perfetto.dev`) en `~/.local/bin`, sin root. La primera vez que corre baja el binario nativo (unos 15 MB, verificado por sha256) |
 
 ### Opcionales (se eligen la primera vez)
 
@@ -100,7 +101,7 @@ La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y 
 dev-setup **no rompe lo que ya funciona**:
 
 - Si algo ya está instalado, se haya instalado como se haya instalado, no lo reinstala, no lo mueve ni lo reemplaza: solo lo reporta. Antes de instalar cada herramienta del `Brewfile` busca el comando en el `PATH`, la app en `/Applications` o el JDK.
-- `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` (para los agentes donde ya están) y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
+- `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` (para los agentes donde ya están), el `trace_processor` que instaló dev-setup y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
 - Si una skill que trae Android Studio también está copiada en `~/.agents/skills` (suele dejarla `android init`), `doctor` avisa que Android Studio la ve dos veces, si esa copia está desactualizada y cómo quitarla. No la borra: `~/.agents/skills` también lo leen otros agentes.
 - Nunca desinstala, nunca borra archivos, nunca usa `--force` y nunca llama a `sudo`: si algo lo necesita, te dice el comando.
 - Respeta tus valores de `JAVA_HOME`, `ANDROID_HOME` y `git config`.

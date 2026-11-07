@@ -6,6 +6,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+### Added
+
+- Perfetto: `bootstrap` instala `trace_processor` en `~/.local/bin`, sin root, para la skill `hb-performance`, y lo verifica con `trace_processor --version`. `update` lo actualiza si cambió el script oficial; `doctor` muestra su versión sin ejecutarlo. Uno instalado de otra forma se respeta.
+
 ## [1.2.0] - 2026-11-02
 
 ### Added

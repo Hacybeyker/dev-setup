@@ -35,7 +35,7 @@ readonly DEV_SETUP_ROOT
 
 # Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update,
 # _shell (las líneas que aporta al bloque de ~/.zshrc) y _next_steps (lo que le toca al usuario).
-DEV_SETUP_MODULES="system base android studio agents claude node ios accounts repos"
+DEV_SETUP_MODULES="system base android studio perfetto agents claude node ios accounts repos"
 for module in $DEV_SETUP_MODULES; do
   # shellcheck source=/dev/null
   . "$DEV_SETUP_ROOT/modules/$module.sh"
