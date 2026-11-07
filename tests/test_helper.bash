@@ -121,6 +121,10 @@ STUB
 printf 'testigo %s\n' "$*" >>"$FAKE_LOG"
 exit 0
 STUB
+  # trace_processor ya está en el PATH: los tests de otros módulos no lo descargan.
+  make_stub trace_processor <<'STUB'
+echo "Perfetto v59.1-stub"
+STUB
   # Red de seguridad: ningún test descarga nada. Con FAKE_INSTALLER_SCRIPT, curl "descarga" ese archivo en
   # la ruta de -o; sin él, falla como sin conexión.
   make_stub curl <<'STUB'
@@ -172,7 +176,7 @@ load_libs() {
     . "$REPO_ROOT/lib/$lib.sh"
   done
   local module
-  for module in system base android studio agents claude node ios accounts repos; do
+  for module in system base android studio perfetto agents claude node ios accounts repos; do
     # shellcheck source=/dev/null
     . "$REPO_ROOT/modules/$module.sh"
   done
