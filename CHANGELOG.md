@@ -6,6 +6,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-06
+
 ### Added
 
 - Perfetto: `bootstrap` instala `trace_processor` en `~/.local/bin`, sin root, para la skill `hb-performance`, y lo verifica con `trace_processor --version`. `update` lo actualiza si cambió el script oficial; `doctor` muestra su versión sin ejecutarlo. Uno instalado de otra forma se respeta.
@@ -56,7 +58,8 @@ Primera versión publicada.
 - Cambios seguros: nunca desinstala, borra, usa `--force` ni `sudo`. En los archivos de configuración solo agrega lo que falta, con respaldo, diff y confirmación. Todo queda en `~/Library/Logs/dev-setup/`.
 - Tests con bats-core y CI en Linux y en macOS con el Bash 3.2 del sistema.
 
-[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.0.0...v1.1.0
