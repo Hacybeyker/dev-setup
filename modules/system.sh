@@ -73,13 +73,13 @@ system_doctor() {
   fi
   info "Bash $BASH_VERSION"
 
-  section "Grupos opcionales"
+  section "Grupos"
   for group in $DEV_SETUP_GROUPS; do
     var="$(group_var "$group")"
     case "${!var:-}" in
       1) state="sí" ;;
       0) state="no" ;;
-      *) state="sin elegir (se pregunta en bootstrap)" ;;
+      *) if [ "$(group_default "$group")" = 1 ]; then state="sí (por defecto)"; else state="no (por defecto)"; fi ;;
     esac
     info "$group: $state — $(group_description "$group")"
   done

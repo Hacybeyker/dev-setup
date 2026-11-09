@@ -84,7 +84,8 @@ setup() {
   [ "$(grep -c 'android sdk update' "$FAKE_LOG")" -eq 1 ]
   grep -qx 'android skills update --agent=claude-code skill-installed' "$FAKE_LOG"
   [ "$(grep -c 'android skills update' "$FAKE_LOG")" -eq 1 ]
-  [[ "$output" == *"pkg/missing-1: falta, corre dev-setup bootstrap"* ]]
+  [[ "$output" == *"pkg/missing-1: falta"* ]]
+  [[ "$output" == *"Para instalar lo que falta del SDK de Android (pkg/missing-1 pkg/missing-2), corre dev-setup bootstrap"* ]]
 }
 
 @test "avisa de las copias de skills que Android Studio ve dos veces, sin borrarlas" {
@@ -131,7 +132,12 @@ setup() {
   run list_entries "$REPO_ROOT/android/sdk-packages.txt"
   [ "$status" -eq 0 ]
   [[ "$output" == *platform-tools* ]]
-  [[ "$output" != *" "* ]]
+  # Una o dos columnas: el paquete y, si lo tiene, un grupo que existe.
+  while read -r package group extra; do
+    [ -n "$package" ] && [ -z "$extra" ]
+    [ -z "$group" ] || is_group "$group"
+  done <<<"$output"
+  [[ "$output" == *"emulator emulator"* ]]
   run list_entries "$REPO_ROOT/android/skills.txt"
   [[ "$output" == *android-cli* ]]
   [[ "$output" != *testing-setup* ]]
@@ -190,7 +196,8 @@ setup() {
   printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=android-studio\n' >"$DEV_SETUP_LOCAL_ENV"
   run "$DEV_SETUP" bootstrap --yes
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Skills oficiales de Android (ningún agente)"* ]]
+  [[ "$output" == *"Skills oficiales de Android (solo Android Studio, que ya las trae)"* ]]
+  [[ "$output" != *"android-studio se omite"* ]]
   [[ "$output" != *"no reconoce"* ]]
   [ "$(grep -c 'android skills' "$FAKE_LOG")" -eq 0 ]
 }
@@ -201,5 +208,59 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"No se pudo descargar"*"Sin Android CLI se saltan el SDK"* ]]
   [[ "$output" == *"==> Shell"* ]]
-  [[ "$output" == *"Lo que te toca"*"no se pudo descargar https://dl.google.com/android/cli/"* ]]
+  [[ "$output" == *"Falló:"$'\n'"      Android CLI: no se pudo descargar de dl.google.com"* ]]
+  [[ "$output" == *"Lo que te toca"*"Android CLI no se instaló: no se pudo descargar de dl.google.com"* ]]
+}
+
+@test "sin el grupo emulator no instala el emulador ni su imagen" {
+  cat >"$BATS_TEST_TMPDIR/sdk-packages.txt" <<'EOF'
+pkg-installed
+pkg/missing-1
+emulador-falso emulator
+EOF
+  mkdir -p "$BATS_TEST_TMPDIR/android"
+  cp "$BATS_TEST_TMPDIR/sdk-packages.txt" "$BATS_TEST_TMPDIR/android/"
+  cp "$DEV_SETUP_ANDROID_DATA/skills.txt" "$BATS_TEST_TMPDIR/android/"
+  export DEV_SETUP_ANDROID_DATA="$BATS_TEST_TMPDIR/android"
+  run "$DEV_SETUP" bootstrap --yes --without emulator
+  [ "$status" -eq 0 ]
+  grep -qx 'android sdk install pkg/missing-1' "$FAKE_LOG"
+  run "$DEV_SETUP" bootstrap --yes --with emulator
+  grep -qx 'android sdk install pkg/missing-1 emulador-falso' "$FAKE_LOG"
+}
+
+@test "sin el grupo android no instala nada de Android" {
+  rm "$STUBS/android"
+  run "$DEV_SETUP" bootstrap --yes --without android
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'dl.google.com\|get.perfetto.dev' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" != *"==> Android"* ]]
+  [[ "$output" != *"==> Perfetto"* ]]
+}
+
+@test "el bloque del shell agrega emulator aunque platform-tools ya este en el PATH" {
+  load_libs
+  sdk="$BATS_TEST_TMPDIR/sdk"
+  mkdir -p "$sdk/platform-tools" "$sdk/emulator"
+  result="$(ANDROID_HOME="$sdk" PATH="/usr/bin:/bin:$sdk/platform-tools" bash -c "$(android_shell)"$'\nprintf %s "$PATH"')"
+  [[ ":$result:" == *":$sdk/emulator:"* ]]
+  [ "$(printf '%s' "$result" | tr ':' '\n' | grep -cx "$sdk/platform-tools")" -eq 1 ]
+}
+
+@test "sin terminal no pregunta por los agentes y usa claude-code si esta el grupo claude" {
+  load_libs
+  android_ask
+  [ -z "${DEV_SETUP_ANDROID_SKILL_AGENTS:-}" ]
+  [ "$(android_skill_agents)" = claude-code ]
+  DEV_SETUP_CLAUDE=0
+  [ -z "$(android_skill_agents)" ]
+}
+
+@test "propone los agentes que encuentra en la maquina" {
+  load_libs
+  mkdir -p "$HOME/.copilot" "$HOME/.junie" "$HOME/.config/opencode"
+  [ "$(android_detect_agents)" = claude-code,github-copilot,junie,opencode ]
+  rm -rf "$HOME/.claude" "$HOME/.copilot" "$HOME/.junie" "$HOME/.config/opencode"
+  DEV_SETUP_CLAUDE=0
+  [ "$(android_detect_agents)" = android-studio ]
 }

@@ -55,7 +55,34 @@ brewfile_entries() {
 # DEV_SETUP_AI_LOCAL → ai-local
 group_name_from_var() { printf '%s' "${1#DEV_SETUP_}" | tr '[:upper:]_' '[:lower:]-'; }
 
-entry_enabled() { [ -z "$1" ] || [ "${!1:-0}" = 1 ]; }
+entry_enabled() { [ -z "$1" ] || group_enabled "$(group_name_from_var "$1")"; }
+
+# Versión que tiene Homebrew de una fórmula o cask, como "gh 2.103.3".
+brew_item_version() {
+  local brew="$1" kind="$2" name="$3" flag=--formula
+  [ "$kind" != cask ] || flag=--cask
+  "$brew" list "$flag" --versions "$name" 2>/dev/null | head -n 1
+}
+
+# brew_outdated <brew> <--formula|--cask> [nombres...]: los que tienen versión nueva, separados por espacios.
+# brew outdated sale con 1 si encuentra alguno: solo importa lo que imprime.
+brew_outdated() {
+  local brew="$1" flag="$2"
+  shift 2
+  [ "$#" -gt 0 ] || return 0
+  "$brew" outdated "$flag" --quiet "$@" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//' || true
+}
+
+BREW_REFRESHED=0
+
+# Un solo `brew update` por ejecución, antes de la primera instalación: dev-setup corre con
+# HOMEBREW_NO_AUTO_UPDATE para que brew no lo repita en cada install. Su salida queda en el log.
+brew_refresh() {
+  [ "$BREW_REFRESHED" = 0 ] || return 0
+  BREW_REFRESHED=1
+  info "Actualizando la lista de Homebrew (el detalle queda en el log)"
+  run_logged "$1" update || warn "brew update falló: se sigue con la lista que ya tenías"
+}
 
 detected_outside_brew() {
   case "$1" in
@@ -84,6 +111,7 @@ base_ensure_homebrew() {
   local brew
   if brew="$(brew_cmd)"; then
     ok "Homebrew: $brew"
+    summary_add ya "Homebrew"
     if ! has_clt; then
       run_cmd xcode-select --install
       is_dry_run || die "Termina de instalar las Command Line Tools (se abrió una ventana) y vuelve a correr dev-setup bootstrap"
@@ -91,27 +119,42 @@ base_ensure_homebrew() {
     return 0
   fi
   info "Instalando Homebrew con su instalador oficial (pide tu contraseña de macOS)"
-  run_remote_installer "$HOMEBREW_INSTALL_URL" || die "No se pudo instalar Homebrew, y sin él no se puede seguir"
+  run_remote_installer "$HOMEBREW_INSTALL_URL" ||
+    die "No se pudo instalar Homebrew (${REMOTE_INSTALLER_ERROR:-falló su instalador}), y sin él no se puede seguir"
   is_dry_run && return 0
   brew="$(brew_cmd)" || die "Homebrew no quedó instalado; revisa el mensaje de su instalador"
   eval "$("$brew" shellenv)"
   ok "Homebrew: $brew"
+  summary_add instalado "Homebrew y las Command Line Tools"
 }
 
-# Instala lo que falta del Brewfile. Lo que ya existe, venga de donde venga, se respeta.
+# Instala lo que falta del Brewfile. Lo que ya existe, venga de donde venga, se respeta. Si una instalación
+# falla, avisa y sigue con lo demás.
 base_install_brewfile() {
-  local kind name group htype hvalue brew
+  local kind name group htype hvalue brew cmd
   brew="$(brew_cmd)" || brew=brew
   while IFS='|' read -r kind name group htype hvalue <&3; do
     entry_enabled "$group" || continue
     case "$(brew_item_status "$kind" "$name" "$htype" "$hvalue")" in
-      managed) ok "$name ya está (Homebrew)" ;;
-      external) ok "$name ya está instalado fuera de Homebrew: se respeta" ;;
+      managed)
+        ok "$name ya está (Homebrew)"
+        summary_add ya "$name"
+        ;;
+      external)
+        ok "$name ya está instalado fuera de Homebrew: se respeta"
+        summary_add ya "$name (fuera de Homebrew)"
+        ;;
       missing)
-        if [ "$kind" = cask ]; then
-          run_cmd "$brew" install --cask "$name"
+        brew_refresh "$brew"
+        if [ "$kind" = cask ]; then cmd="install --cask"; else cmd=install; fi
+        # Las palabras de cmd se separan a propósito.
+        # shellcheck disable=SC2086
+        if run_cmd "$brew" $cmd "$name"; then
+          is_dry_run || summary_add instalado "$name"
         else
-          run_cmd "$brew" install "$name"
+          error "No se pudo instalar $name con Homebrew; se sigue con lo demás"
+          summary_add fallo "$name: falló brew $cmd $name"
+          next_step "Revisa el error de brew $cmd $name y vuelve a correr dev-setup bootstrap"
         fi
         ;;
     esac
@@ -125,12 +168,15 @@ base_ensure_cli_link() {
   target="$DEV_SETUP_ROOT/bin/dev-setup"
   if [ -L "$link" ] && [ "$(readlink "$link")" = "$target" ]; then
     ok "Comando dev-setup en $link"
+    summary_add ya "comando dev-setup"
   elif [ -e "$link" ] || [ -L "$link" ]; then
     warn "$link ya existe y no apunta a este repo: no lo toco"
+    summary_add ya "$link (no es de este repo: no se tocó)"
   else
     run_cmd mkdir -p "$(dirname "$link")"
     run_cmd ln -s "$target" "$link"
     is_dry_run || ok "Comando dev-setup en $link"
+    summary_add configurado "comando dev-setup en ~/.local/bin"
   fi
 }
 
@@ -181,32 +227,68 @@ base_install() {
   base_install_brewfile
 }
 
-# Actualiza solo lo que Homebrew gestiona y está en el Brewfile.
+# Actualiza solo lo que Homebrew gestiona y está en el Brewfile. En el resumen, lo que cambió de versión
+# queda como actualizado y lo demás, como revisado.
 base_update() {
-  local brew kind name group htype hvalue formulae="" casks=""
+  local brew kind name group htype hvalue formulae="" casks="" managed="" missing="" before after
   section "Herramientas (Brewfile)"
   if ! brew="$(brew_cmd)"; then
     warn "Falta Homebrew: corre dev-setup bootstrap"
     return 0
   fi
-  run_cmd "$brew" update
+  brew_refresh "$brew"
   while IFS='|' read -r kind name group htype hvalue <&3; do
     entry_enabled "$group" || continue
     case "$(brew_item_status "$kind" "$name" "$htype" "$hvalue")" in
-      managed) if [ "$kind" = cask ]; then casks="$casks $name"; else formulae="$formulae $name"; fi ;;
-      external) info "$name: instalado fuera de Homebrew, se actualiza por su cuenta" ;;
-      missing) warn "$name: falta, corre dev-setup bootstrap" ;;
+      managed)
+        managed="$managed $kind:$name"
+        if [ "$kind" = cask ]; then casks="$casks $name"; else formulae="$formulae $name"; fi
+        ;;
+      external)
+        info "$name: instalado fuera de Homebrew, se actualiza por su cuenta"
+        summary_add ya "$name (fuera de Homebrew, se actualiza por su cuenta)"
+        ;;
+      missing)
+        warn "$name: falta"
+        missing="$missing $name"
+        ;;
     esac
   done 3< <(brewfile_entries)
-  # Los nombres de Homebrew no tienen espacios: la separación en palabras es intencional.
+  [ -z "$missing" ] || next_step "Para instalar lo que falta (${missing# }), corre dev-setup bootstrap"
+  before="$(for name in $managed; do brew_item_version "$brew" "${name%%:*}" "${name#*:}"; done)"
+  # Solo se actualiza lo que tiene versión nueva: con lo que ya está al día, brew upgrade solo da un aviso.
+  # Los nombres de Homebrew no tienen espacios: aquí y abajo, la separación en palabras es intencional.
   # shellcheck disable=SC2086
-  [ -z "$formulae" ] || run_cmd "$brew" upgrade --formula $formulae
+  formulae="$(brew_outdated "$brew" --formula $formulae)"
+  # shellcheck disable=SC2086
+  casks="$(brew_outdated "$brew" --cask $casks)"
+  # shellcheck disable=SC2086
+  [ -z "$formulae" ] || run_cmd "$brew" upgrade --formula $formulae || warn "brew upgrade falló para alguna fórmula"
   # Las casks que se actualizan solas (como Toolbox) las salta Homebrew.
   # shellcheck disable=SC2086
-  [ -z "$casks" ] || run_cmd "$brew" upgrade --cask $casks
+  [ -z "$casks" ] || run_cmd "$brew" upgrade --cask $casks || warn "brew upgrade falló para alguna cask"
+  after="$(for name in $managed; do brew_item_version "$brew" "${name%%:*}" "${name#*:}"; done)"
+  while IFS='|' read -r kind name; do
+    [ -z "$name" ] || summary_add "$kind" "$name"
+  done < <(awk 'NR == FNR { old[$1] = $0; next }
+    NF { if (($1 in old) && old[$1] != $0) print "actualizado|" old[$1] " → " $NF; else print "revisado|" $1 }' \
+    <(printf '%s\n' "$before") <(printf '%s\n' "$after"))
 }
 
-# Líneas del bloque de ~/.zshrc. Cada una respeta lo que el usuario ya tenga definido.
+# Comandos para comprobar lo instalado desde el Brewfile.
+base_verify() {
+  local kind name group htype hvalue
+  printf '%s\n' 'brew --version'
+  while IFS='|' read -r kind name group htype hvalue <&3; do
+    entry_enabled "$group" || continue
+    case "$htype" in
+      bin) printf '%s --version\n' "$hvalue" ;;
+      jdk) printf '%s\n' 'java -version' ;;
+    esac
+  done 3< <(brewfile_entries)
+}
+
+# Líneas del bloque del archivo de arranque del shell. Cada una respeta lo que el usuario ya tenga definido.
 base_shell() {
   local jdk
   # shellcheck disable=SC2016

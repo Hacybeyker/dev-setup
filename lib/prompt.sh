@@ -27,6 +27,26 @@ ask_yes_no() {
   done
 }
 
+# ask_text <pregunta> <por defecto> [validador]: imprime la respuesta, o el valor por defecto si se deja
+# vacía o no hay terminal. Con validador (una función), repite la pregunta hasta que sea válida.
+ask_text() {
+  local question="$1" default="$2" validator="${3:-}" answer
+  if ! can_prompt; then
+    printf '%s' "$default"
+    return 0
+  fi
+  while true; do
+    printf '  ? %s [%s] ' "$question" "$default" >/dev/tty
+    read -r answer </dev/tty || answer=""
+    [ -n "$answer" ] || answer="$default"
+    if [ -z "$validator" ] || "$validator" "$answer"; then
+      printf '%s' "$answer"
+      return 0
+    fi
+    printf '    Valor no válido.\n' >/dev/tty
+  done
+}
+
 # confirm <pregunta>: --yes la acepta sin preguntar; sin terminal se rechaza.
 confirm() {
   [ "${DEV_SETUP_ASSUME_YES:-0}" != 1 ] || return 0

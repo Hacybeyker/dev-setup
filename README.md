@@ -14,9 +14,13 @@ Una Mac limpia no tiene `git`, así que el arranque es un solo comando que desca
 curl -fsSL https://raw.githubusercontent.com/Hacybeyker/dev-setup/v1.3.0/install.sh | bash
 ```
 
-Instala las Command Line Tools (traen `git`), clona este repo en `~/Claude/dev-setup` en la versión del instalador y corre `dev-setup bootstrap`, que instala Homebrew y todo lo demás y deja el comando `dev-setup` en `~/.local/bin`. Tarda entre 30 y 60 minutos, casi todo en descargas. Al final te lista lo que te toca a ti, como los logins.
+Instala las Command Line Tools (traen `git`), clona este repo en `~/Claude/dev-setup` en la versión del instalador y corre `dev-setup bootstrap`. Primero te pregunta qué instalar (Enter acepta lo propuesto); después instala Homebrew y lo que elegiste y deja el comando `dev-setup` en `~/.local/bin`. Tarda entre 30 y 60 minutos, casi todo en descargas. Al final muestra:
 
-Para elegir los grupos opcionales desde el inicio, pásalos al final: `... | bash -s -- --with node --with ios`. Para clonar en otra carpeta: `... | DEV_SETUP_DIR=~/otra/carpeta bash`. Si la carpeta ya es un clon de dev-setup, la usa tal como está; si es otra cosa, no la toca.
+- **Resumen:** qué se instaló, actualizó o configuró, qué ya estaba y se respetó, qué omitiste, qué falló y por qué, y qué archivo del shell cambió un instalador externo.
+- **Para verificar:** los comandos (`android -V`, `adb version`, `claude --version`…) para comprobarlo en una terminal nueva.
+- **Lo que te toca:** los logins y demás pasos que dependen de ti.
+
+Para elegir desde el inicio, pásalo al final: `... | bash -s -- --with node --without claude`. Para clonar en otra carpeta: `... | DEV_SETUP_DIR=~/otra/carpeta bash`. Si la carpeta ya es un clon de dev-setup, la usa tal como está; si es otra cosa, no la toca.
 
 ### En una Mac que ya tiene cosas instaladas
 
@@ -47,38 +51,42 @@ Usa la carpeta de `DEV_SETUP_DIR` si elegiste otra. Tu `local.env` y tu `repos.t
 
 ## Qué instala
 
-### Base (siempre)
+### Siempre
 
 | Herramienta | Para qué | Cómo |
 | --- | --- | --- |
 | Command Line Tools de Xcode | `git` y compiladores | `xcode-select --install` |
 | Homebrew | Gestor de paquetes | Instalador oficial |
-| `gh`, `jq`, `shellcheck`, `bats-core` | GitHub, JSON, análisis y tests de shell | `Brewfile` |
-| Temurin 21 (LTS) | JDK para la terminal (`./gradlew`, Android CLI). Corre Gradle 8.5 en adelante; cada proyecto fija el suyo con toolchains | `Brewfile` |
-| JetBrains Toolbox | Instalar Android Studio y los demás IDEs de JetBrains | `Brewfile` |
-| Android CLI y SDK | Compilar y emular: platform-tools, emulator, cmdline-tools, build-tools, la última plataforma estable y su imagen de emulador (lista en `android/sdk-packages.txt`) | Instalador oficial y `android sdk install` |
-| Claude Code y sus plugins | Agente de IA en la terminal, con los plugins de `claude/plugins.txt` | Instalador oficial y `claude plugin install` |
-| [testigo](https://github.com/Hacybeyker/testigo) | Pruebas E2E con evidencia sobre Maestro | Instalador oficial y `testigo setup` |
-| `trace_processor` de [Perfetto](https://perfetto.dev) | Analizar trazas de rendimiento con SQL; lo usa la skill `hb-performance` de agent-skills | Script oficial (`get.perfetto.dev`) en `~/.local/bin`, sin root. La primera vez que corre baja el binario nativo (unos 15 MB, verificado por sha256) |
+| `jq` | JSON; lo usa dev-setup | `Brewfile` |
+| Comando `dev-setup` y bloque del shell | Usar dev-setup y cargar el entorno en cada terminal | Enlace en `~/.local/bin` y bloque en el archivo de arranque del shell |
 
-### Opcionales (se eligen la primera vez)
+### Lo que eliges
 
-| Grupo | Qué instala |
-| --- | --- |
-| `ai-local` | LM Studio, para modelos locales |
-| `terminal` | Warp |
-| `node` | nvm, Node.js LTS y pnpm. Si ya tienes Node.js o lo gestiona otra herramienta (fnm, volta, mise, asdf), no instala nvm |
-| `ios` | Nada: revisa Xcode para el target iOS de KMP y te dice qué falta |
+`bootstrap` pregunta por cada grupo la primera vez. La elección se guarda en `local.env` y se cambia con `--with <grupo>` y `--without <grupo>`. Sin terminal para preguntar, cada grupo queda con su valor por defecto.
 
-La elección se guarda en `local.env` y se puede cambiar con `--with <grupo>` y `--without <grupo>`.
+| Grupo | Por defecto | Qué instala |
+| --- | --- | --- |
+| `android` | sí | Android CLI y SDK (platform-tools, cmdline-tools, build-tools y la última plataforma estable; lista en `android/sdk-packages.txt`), las skills oficiales de Android para los agentes que elijas, la memoria de Android Studio y `trace_processor` de [Perfetto](https://perfetto.dev) (analizar trazas con SQL; lo usa la skill `hb-performance`), en `~/.local/bin` y sin root |
+| `emulator` | sí | El emulador de Android y su imagen de sistema (Google Play, arm64, páginas de 16 KB): unos 3 GB. Solo se pregunta con `android` |
+| `ide` | sí | Temurin 21 (LTS), el JDK para la terminal (`./gradlew`, Android CLI), y JetBrains Toolbox, para instalar Android Studio y los demás IDEs de JetBrains |
+| `github` | sí | GitHub CLI (`gh`) |
+| `skills` | sí | Las skills propias de [agent-skills](https://github.com/Hacybeyker/agent-skills) y [testigo](https://github.com/Hacybeyker/testigo), para pruebas E2E con evidencia sobre Maestro |
+| `claude` | sí | Claude Code, con los plugins de `claude/plugins.txt` y su `settings.json` |
+| `node` | no | nvm, Node.js LTS y pnpm. Si ya tienes Node.js o lo gestiona otra herramienta (fnm, volta, mise, asdf), no instala nvm |
+| `ios` | no | Nada: revisa Xcode para el target iOS de KMP y te dice qué falta |
+| `ai-local` | no | LM Studio, para modelos locales |
+| `terminal` | no | Warp |
+| `dev-tools` | no | `shellcheck` y `bats-core`, para contribuir a dev-setup |
+
+Si el instalador oficial de una herramienta falla (por ejemplo, porque la red de tu empresa bloquea su servidor), dev-setup sigue con lo demás, te dice el motivo en el resumen y, para Claude Code, te ofrece probar con Homebrew.
 
 ## Qué configura
 
-- **Skills de agentes:** las propias con el `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills), las oficiales de Android seleccionadas (`android/skills.txt`) con `android skills add`, para los agentes que elijas en `local.env` (`DEV_SETUP_ANDROID_SKILL_AGENTS`; por defecto, solo Claude Code) y nunca para Android Studio, que ya las trae todas (un agente mal escrito se salta con un aviso), y [testigo](https://github.com/Hacybeyker/testigo) con `testigo setup`.
-- **Claude Code:** `~/.claude/settings.json` sin atribución de IA en commits ni PRs, y con permiso para leer las carpetas de skills. Solo agrega lo que falta: tus claves y valores se quedan como están.
+- **Skills de agentes:** las propias, con el `install.sh` de [agent-skills](https://github.com/Hacybeyker/agent-skills), quedan enlazadas en `~/.claude/skills` (Claude Code) y `~/.agents/skills` (Copilot, Junie, Codex y Gemini en Android Studio). Las oficiales de Android seleccionadas (`android/skills.txt`) se instalan con `android skills add` para los agentes que elijas: `bootstrap` te propone los que encuentra en la máquina (`claude-code`, `github-copilot`, `junie`, `codex`, `gemini`, `cursor`, `opencode`) y lo guarda en `DEV_SETUP_ANDROID_SKILL_AGENTS`. Nunca para Android Studio, que ya las trae todas; un agente mal escrito se salta con un aviso. testigo se prepara con `testigo setup`.
+- **Claude Code:** `~/.claude/settings.json` sin atribución de IA en commits ni PRs, y con permiso para leer las carpetas de skills. Solo agrega lo que falta: tus claves y valores se quedan como están. Si Claude Code no está instalado, no lo toca.
 - **agent-skills:** lo clona junto a dev-setup (por ejemplo `~/Claude/agent-skills`) y corre su `install.sh`. Si la carpeta ya existe y no es un clon, no la toca.
 - **Android Studio:** memoria del IDE (`-Xmx` en `studio.vmoptions`) según la RAM: 4 GB con menos de 32 GB, 6 GB desde 32 GB y 8 GB desde 64 GB, o el valor de `DEV_SETUP_STUDIO_XMX` en `local.env`. Si ya tiene uno (por ejemplo, puesto desde *Settings → Memory Settings*), lo respeta. Hace falta haber abierto Android Studio una vez.
-- **Shell:** un único bloque marcado `# >>> dev-setup >>>` en `~/.zshrc` (o `$ZDOTDIR/.zshrc`) con `~/.local/bin` en el `PATH`, Homebrew, `JAVA_HOME`, `ANDROID_HOME`, las herramientas del SDK (`adb`, `emulator`) y nvm si el grupo `node` está activo. Cada línea respeta lo que ya tengas definido.
+- **Shell:** un único bloque marcado `# >>> dev-setup >>>` en `~/.zshrc` (o `$ZDOTDIR/.zshrc`) con zsh, o en `~/.bash_profile` con bash, con `~/.local/bin` en el `PATH`, Homebrew, `JAVA_HOME`, `ANDROID_HOME`, las herramientas del SDK (`adb`, `emulator`, cada una por separado) y nvm si el grupo `node` está activo. Cada línea respeta lo que ya tengas definido.
 - **Repos (opcional):** clona los repos de `repos.txt` que falten. Nunca hace pull ni toca una carpeta que ya existe: tus repos pueden tener trabajo en curso.
 
 ## Qué no hace, y por qué
@@ -112,7 +120,7 @@ dev-setup **no rompe lo que ya funciona**:
 
 No se versiona (está en `.gitignore`):
 
-- `local.env`: grupos elegidos y ajustes propios de la máquina. Formato en `local.env.example`.
+- `local.env`: lo que elegiste instalar y ajustes propios de la máquina. Formato en `local.env.example`.
 - `repos.txt`: repos que se clonan, que pueden ser privados. Formato en `repos.txt.example`.
 
 ## Desarrollo

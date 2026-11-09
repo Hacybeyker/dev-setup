@@ -56,8 +56,20 @@ setup() {
   if command -v zsh >/dev/null; then zsh -n "$HOME/.zshrc"; fi
 }
 
-@test "avisa si el shell no es zsh" {
-  export SHELL=/bin/bash
+@test "avisa si el shell no es zsh ni bash" {
+  export SHELL=/usr/local/bin/fish
   run "$DEV_SETUP" doctor
-  [[ "$output" == *"solo configura zsh"* ]]
+  [[ "$output" == *"dev-setup configura zsh y bash; se usa ~/.zshrc"* ]]
+}
+
+@test "con bash, el bloque va en ~/.bash_profile y funciona en bash" {
+  export SHELL=/bin/bash DEV_SETUP_SKIP_OS_CHECK=1
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  grep -qx '# >>> dev-setup >>>' "$HOME/.bash_profile"
+  [ ! -e "$HOME/.zshrc" ]
+  bash -n "$HOME/.bash_profile"
+  [[ "$output" == *"source $HOME/.bash_profile"* ]]
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"Bloque de dev-setup al día"* ]]
 }

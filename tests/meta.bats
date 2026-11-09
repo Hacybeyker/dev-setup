@@ -7,6 +7,18 @@
   [ "$status" -eq 1 ]
 }
 
+@test "en el Brewfile, el valor por defecto de cada grupo es el de dev-setup" {
+  root="$BATS_TEST_DIRNAME/.."
+  # shellcheck source=/dev/null
+  . "$root/lib/config.sh"
+  while read -r var default; do
+    group="$(printf '%s' "${var#DEV_SETUP_}" | tr '[:upper:]_' '[:lower:]-')"
+    is_group "$group"
+    [ "$default" = "$(group_default "$group")" ]
+  done < <(sed -n 's/.*ENV.fetch("\([A-Z_]*\)", "\([01]\)").*/\1 \2/p' "$root/Brewfile")
+  [ "$(grep -c 'ENV.fetch' "$root/Brewfile")" -ge 6 ]
+}
+
 @test "install.sh, el README y el CHANGELOG apuntan a la misma version" {
   root="$BATS_TEST_DIRNAME/.."
   ref="$(sed -n 's/.*DEV_SETUP_REF:-\([^}]*\)}.*/\1/p' "$root/install.sh")"

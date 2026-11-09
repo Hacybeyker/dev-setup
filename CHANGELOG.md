@@ -6,6 +6,28 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+### Added
+
+- `bootstrap` pregunta qué instalar la primera vez, con un valor por defecto para cada grupo. Nuevos grupos: `android`, `emulator`, `ide`, `github`, `skills` y `claude` (por defecto sí) y `dev-tools` (por defecto no). Siempre se instalan las Command Line Tools, Homebrew, `jq`, el comando `dev-setup` y el bloque del shell. Un `local.env` anterior sigue igual: los grupos nuevos usan su valor por defecto.
+- `bootstrap` pregunta para qué agentes instalar las skills oficiales de Android y propone los que encuentra en la máquina (Claude Code, Copilot, Junie, Codex, Gemini, Cursor u OpenCode).
+- `bootstrap` y `update` terminan con un resumen (instalado, actualizado, configurado, ya estaba, omitido, falló y cambiado por un instalador externo) y con los comandos para verificar lo instalado, como `android -V` o `claude --version`.
+- Soporte para bash: con bash, el bloque va en `~/.bash_profile`.
+- Si el instalador de Claude Code falla, `bootstrap` ofrece probar con Homebrew (`brew install --cask claude-code`).
+
+### Changed
+
+- Un instalador oficial que falla dice el motivo: sin conexión, o el código HTTP con el que el servidor rechazó la descarga (por ejemplo, una red de empresa que bloquea claude.ai).
+- Homebrew corre un solo `brew update`, antes de la primera instalación y con su salida en el log, y sin limpieza ni consejos en cada comando. Si `brew install` falla, dev-setup avisa y sigue con lo demás.
+- Sin Claude Code, `bootstrap` no toca `~/.claude/settings.json`.
+- Menos ruido: `update` solo le pide a Homebrew actualizar lo que tiene versión nueva (sin avisos de "already installed") y muestra una línea por agente y por plugin. El detalle de las skills oficiales, los plugins de Claude Code y el `install.sh` de agent-skills queda en el log; en pantalla, solo sus avisos.
+- `shellcheck` y `bats-core` pasan al grupo `dev-tools`, desactivado por defecto: solo hacen falta para contribuir a dev-setup. Si ya los tienes, siguen instalados.
+- `doctor` muestra cuántas skills propias están enlazadas en `~/.claude/skills` y en `~/.agents/skills`, que leen Copilot, Junie, Codex y Gemini en Android Studio.
+
+### Fixed
+
+- `emulator` faltaba en el `PATH` si `platform-tools` ya estaba: ahora cada carpeta se revisa por separado.
+- `install.sh` ya no muestra el aviso "is not a commit!" de git al clonar una versión.
+
 ## [1.3.0] - 2026-11-06
 
 ### Added

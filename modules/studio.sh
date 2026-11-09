@@ -62,14 +62,20 @@ studio_ensure_memory() {
   current="$(studio_current_xmx "$file" || true)"
   if [ -n "$current" ]; then
     ok "Memoria del IDE: -Xmx$current (se respeta)"
+    summary_add ya "memoria de Android Studio (-Xmx$current)"
     return 0
   fi
   new="$(new_temp_file)"
   [ ! -f "$file" ] || cat "$file" >"$new"
   printf -- '-Xmx%s\n' "$(studio_desired_xmx)" >>"$new"
   apply_file_change "$file" "$new"
-  if ! is_dry_run && [ -n "$(studio_current_xmx "$file" || true)" ]; then
+  is_dry_run && return 0
+  current="$(studio_current_xmx "$file" || true)"
+  if [ -n "$current" ]; then
     info "Reinicia Android Studio para aplicar la memoria"
+    summary_add configurado "memoria de Android Studio (-Xmx$current)"
+  else
+    summary_add omitido "memoria de Android Studio (no aceptaste el cambio)"
   fi
 }
 

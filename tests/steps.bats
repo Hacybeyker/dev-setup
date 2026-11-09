@@ -43,10 +43,43 @@ setup() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"Lo que te toca"*"gh auth login"* ]]
   [[ "$output" == *"Android Studio desde JetBrains Toolbox"* ]]
-  [[ "$output" == *"terminal nueva"* ]]
+  [[ "$output" == *"Abre una terminal nueva"* ]]
   run "$DEV_SETUP" bootstrap --yes
   [ "$status" -eq 0 ]
-  [[ "$output" != *"terminal nueva"* ]]
+  [[ "$output" != *"Abre una terminal nueva"* ]]
+}
+
+@test "bootstrap termina con el resumen y los comandos para verificar" {
+  export DEV_SETUP_SKIP_OS_CHECK=1
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"==> Resumen"*"==> Para verificar (en una terminal nueva)"*"==> Lo que te toca"*"==> Listo"* ]]
+  [[ "$output" == *"Ya estaba (se respetó):"*"      tool-managed"* ]]
+  [[ "$output" == *"Instalado:"*"      tool-missing"* ]]
+  [[ "$output" == *"Configurado:"*"      bloque de dev-setup en ~/.zshrc"* ]]
+  [[ "$output" == *"Omitido por tu elección:"$'\n'"      node, ios, ai-local, terminal, dev-tools"* ]]
+  [[ "$output" == *"  android -V"*"  claude --version"*"  dev-setup doctor"* ]]
+  [[ "$output" != *"  node --version"* ]]
+}
+
+@test "print_summary agrupa por categoria sin repetir" {
+  load_libs
+  summary_add instalado "uno"
+  summary_add ya "dos"
+  summary_add instalado "tres"
+  summary_add instalado "uno"
+  run print_summary
+  [[ "$output" == *"Instalado:"$'\n'"      uno"$'\n'"      tres"$'\n'* ]]
+  [ "$(grep -c '^      uno$' <<<"$output")" -eq 1 ]
+  [[ "$output" == *"Ya estaba (se respetó):"$'\n'"      dos"* ]]
+  [[ "$output" != *"Falló"* ]]
+}
+
+@test "dry-run no muestra resumen ni comandos para verificar" {
+  run "$DEV_SETUP" bootstrap --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"==> Resumen"* ]]
+  [[ "$output" != *"Para verificar"* ]]
 }
 
 @test "dry-run no muestra pasos pendientes" {

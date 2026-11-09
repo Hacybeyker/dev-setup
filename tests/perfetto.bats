@@ -63,7 +63,9 @@ SCRIPT
   fake_script v59.1
   run perfetto_update
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Falta trace_processor: corre dev-setup bootstrap"* ]]
+  [[ "$output" == *"Falta trace_processor"* ]]
+  perfetto_update >/dev/null 2>&1
+  [[ "$DEV_SETUP_NEXT_STEPS" == *"Para instalar trace_processor, corre dev-setup bootstrap"* ]]
   [ ! -e "$DEST" ]
   [ "$(grep -c '^curl' "$FAKE_LOG")" -eq 0 ]
 }

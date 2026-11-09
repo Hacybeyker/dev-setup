@@ -69,7 +69,7 @@ ensure_clt() {
 # Clona dev-setup. Si la carpeta ya es un clon de dev-setup, la usa tal como está; si es otra
 # cosa, no la toca.
 ensure_clone() {
-  local repo_url="$1" ref="$2" dir="$3" origin
+  local repo_url="$1" ref="$2" dir="$3" origin existed=1
   if [ -e "$dir/.git" ]; then
     origin="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
     case "$origin" in
@@ -84,7 +84,16 @@ ensure_clone() {
     die "$dir ya existe y no es un clon de dev-setup: no se toca. Elige otra carpeta con DEV_SETUP_DIR"
   fi
   info "Clonando dev-setup ($ref) en $dir"
-  git -c advice.detachedHead=false clone --quiet --branch "$ref" -- "$repo_url" "$dir"
+  # Sin checkout y después checkout de la versión: con `clone --branch` y una etiqueta anotada, algunas
+  # versiones de git avisan "is not a commit!" aunque todo salga bien.
+  [ -e "$dir" ] || existed=0
+  git clone --quiet --no-checkout -- "$repo_url" "$dir"
+  if ! git -C "$dir" -c advice.detachedHead=false checkout --quiet "$ref"; then
+    # La carpeta estaba vacía o no existía: se deja igual que antes para poder reintentar.
+    rm -rf "$dir"
+    [ "$existed" = 0 ] || mkdir -p "$dir"
+    die "No existe la versión $ref en $repo_url"
+  fi
   ok "dev-setup clonado en $dir"
 }
 

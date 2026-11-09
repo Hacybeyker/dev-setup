@@ -61,12 +61,31 @@ setup() {
   grep -qx 'corrio con X=1' "$FAKE_LOG"
 }
 
-@test "si la descarga falla, run_remote_installer no corre nada y deja un paso pendiente" {
+@test "si la descarga falla, run_remote_installer no corre nada y deja el motivo" {
   run run_remote_installer https://example.com/install.sh
   [ "$status" -eq 1 ]
   [[ "$output" == *"No se pudo descargar https://example.com/install.sh"* ]]
   if run_remote_installer https://example.com/install.sh 2>/dev/null; then false; fi
-  [[ "$DEV_SETUP_NEXT_STEPS" == *"no se pudo descargar https://example.com/install.sh"* ]]
+  [ "$REMOTE_INSTALLER_ERROR" = "no se pudo descargar de example.com: revisa tu conexión" ]
+  installer_failed Ejemplo
+  [[ "$DEV_SETUP_NEXT_STEPS" == *"Ejemplo no se instaló: no se pudo descargar de example.com"* ]]
+  [[ "$DEV_SETUP_SUMMARY" == *"fallo|Ejemplo: no se pudo descargar de example.com"* ]]
+}
+
+@test "si el servidor rechaza la descarga, el motivo dice el codigo HTTP" {
+  make_stub curl <<'STUB'
+echo "curl: (22) The requested URL returned error: 403" >&2
+exit 22
+STUB
+  if run_remote_installer https://example.com/install.sh 2>/dev/null; then false; fi
+  [ "$REMOTE_INSTALLER_ERROR" = "example.com rechazó la descarga (HTTP 403): puede que tu red o un proxy lo bloquee" ]
+}
+
+@test "si el instalador cambia un archivo de arranque del shell, queda en el resumen" {
+  export FAKE_INSTALLER_SCRIPT="$BATS_TEST_TMPDIR/instalador.sh"
+  printf 'printf "export PATH=x\\n" >>"$HOME/.bash_profile"\n' >"$FAKE_INSTALLER_SCRIPT"
+  run_remote_installer https://example.com/install.sh 2>/dev/null
+  [[ "$DEV_SETUP_SUMMARY" == *"externo|~/.bash_profile (instalador de example.com)"* ]]
 }
 
 @test "si el instalador falla, run_remote_installer devuelve su codigo" {
