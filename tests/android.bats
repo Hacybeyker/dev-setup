@@ -273,5 +273,41 @@ EOF
   run "$DEV_SETUP" bootstrap --yes
   [ "$status" -eq 0 ]
   grep -qx 'android skills add --agent=claude-code skill-missing' "$FAKE_LOG"
-  [[ "$output" == *"Skills oficiales de Android instaladas para claude-code (1)"* ]]
+  [[ "$output" == *"claude-code: 1 ya estaba, 1 instalada (skill-missing)"* ]]
+  [[ "$output" != *"ya está para"* ]]
+  grep -q 'skill-installed ya está para claude-code' "$HOME"/Library/Logs/dev-setup/*.log
+}
+
+@test "con todas las skills oficiales, bootstrap muestra una sola linea por agente" {
+  export FAKE_ANDROID_SKILLS="claude-code:skill-installed claude-code:skill-missing github-copilot:skill-installed"
+  printf 'DEV_SETUP_ANDROID_SKILL_AGENTS=claude-code,github-copilot\n' >>"$DEV_SETUP_LOCAL_ENV"
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"claude-code: las 2 ya están"* ]]
+  [[ "$output" == *"github-copilot: 1 ya estaba, 1 instalada (skill-missing)"* ]]
+  [ "$(grep -c 'android skills add' "$FAKE_LOG")" -eq 1 ]
+}
+
+@test "si todas faltan, bootstrap dice cuantas instalo; con --dry-run, ninguna" {
+  export FAKE_ANDROID_SKILLS=""
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"claude-code: las 2 instaladas"* ]]
+  run "$DEV_SETUP" bootstrap --dry-run
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[dry-run]"*"skills add --agent=claude-code skill-installed"* ]]
+  [[ "$output" != *"instaladas"* ]]
+}
+
+@test "si una skill oficial falla, queda en su linea y el resto en la del agente" {
+  make_stub android <<'STUB'
+printf 'android %s\n' "$*" >>"$FAKE_LOG"
+[ "$1 ${2:-}" != "skills add" ] || exit 1
+[ "$1 ${2:-}" != "skills list" ] || printf 'skill-installed\nDescripcion.\n\n'
+exit 0
+STUB
+  run "$DEV_SETUP" bootstrap --yes
+  [[ "$output" == *"✖ No se pudo instalar la skill skill-missing para claude-code: el detalle está en el log"* ]]
+  [[ "$output" == *"✔ claude-code: 1 ya estaba"$'\n'* ]]
+  [[ "$output" != *"instalada"* ]]
 }

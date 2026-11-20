@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Grupo skills: las skills propias de agent-skills y testigo. El install.sh de agent-skills las enlaza en
+# Grupo skills: las skills HB de agent-skills y testigo. El install.sh de agent-skills las enlaza en
 # ~/.claude/skills (Claude Code) y ~/.agents/skills (Copilot, Junie, Codex y Gemini en Android Studio).
 
 AGENT_SKILLS_REPO_DEFAULT="https://github.com/Hacybeyker/agent-skills.git"
@@ -27,22 +27,76 @@ testigo_from_installer() {
   esac
 }
 
-# agent_skills_link_count <carpeta>: cuántas skills del clon tienen su enlace en esa carpeta,
-# como "<enlazadas>/<total>".
-agent_skills_link_count() {
-  local dir skill total=0 linked=0
-  dir="$(agent_skills_dir)"
-  for skill in "$dir"/skills/*/; do
+# Las skills HB del clon de agent-skills (las carpetas de skills/ que tienen SKILL.md), una por línea.
+agent_skills_names() {
+  local skill
+  for skill in "$(agent_skills_dir)"/skills/*/; do
     [ -f "${skill}SKILL.md" ] || continue
-    total=$((total + 1))
-    [ -L "$1/$(basename "$skill")" ] && linked=$((linked + 1))
+    basename "$skill"
   done
-  printf '%s/%s' "$linked" "$total"
 }
 
-# Cuántas skills propias están enlazadas en cada carpeta y qué agentes las leen.
+# agent_skill_missing_in <skill>: las carpetas de skills de los agentes en las que falta su enlace.
+agent_skill_missing_in() {
+  local dir missing=""
+  for dir in "$(claude_skills_dir)" "$HOME/.agents/skills"; do
+    [ -L "$dir/$1" ] || missing="$missing${missing:+ y }$(display_path "$dir")"
+  done
+  printf '%s' "$missing"
+}
+
+AGENT_SKILLS_LINKED=0
+
+# bootstrap y update: una línea con las skills HB enlazadas y un aviso por cada una a la que le falta un enlace.
+# Deja en AGENT_SKILLS_LINKED cuántas están enlazadas en las dos carpetas.
 agents_skills_where() {
-  info "Enlazadas: $(agent_skills_link_count "$(claude_skills_dir)") en $(display_path "$(claude_skills_dir)") (Claude Code) y $(agent_skills_link_count "$HOME/.agents/skills") en ~/.agents/skills (Copilot, Junie, Codex y Gemini en Android Studio)"
+  local name names="" missing
+  AGENT_SKILLS_LINKED=0
+  while IFS= read -r name; do
+    missing="$(agent_skill_missing_in "$name")"
+    if [ -n "$missing" ]; then
+      warn "$name: falta su enlace en $missing"
+    else
+      AGENT_SKILLS_LINKED=$((AGENT_SKILLS_LINKED + 1))
+      names="$names${names:+, }$name"
+    fi
+  done < <(agent_skills_names)
+  case "$AGENT_SKILLS_LINKED" in
+    0) ;;
+    1) ok "1 enlazada en $(display_path "$(claude_skills_dir)") y ~/.agents/skills: $names" ;;
+    *) ok "$AGENT_SKILLS_LINKED enlazadas en $(display_path "$(claude_skills_dir)") y ~/.agents/skills: $names" ;;
+  esac
+}
+
+# doctor: cada skill HB en su línea, con las carpetas en las que le falta el enlace, y qué agentes leen cada una.
+agents_skills_detail() {
+  local name missing found=0
+  while IFS= read -r name; do
+    found=1
+    missing="$(agent_skill_missing_in "$name")"
+    if [ -n "$missing" ]; then warn "$name: falta su enlace en $missing"; else ok "$name"; fi
+  done < <(agent_skills_names)
+  if [ "$found" -eq 0 ]; then
+    warn "$(agent_skills_dir)/skills no tiene skills"
+    return 0
+  fi
+  info "Enlazadas en $(display_path "$(claude_skills_dir)") (Claude Code) y ~/.agents/skills (Copilot, Junie, Codex y Gemini en Android Studio)"
+}
+
+# La skill testigo-flows, para escribir flows con IA: testigo setup la copia en ~/.claude/skills si se lo pides.
+# También puede ser un enlace a un clon de testigo. Solo se informa: la gestiona testigo.
+agents_testigo_skill() {
+  local skill
+  skill="$(claude_skills_dir)/testigo-flows"
+  if [ -L "$skill" ] && [ ! -f "$skill/SKILL.md" ]; then
+    warn "Skill testigo-flows: $(display_path "$skill") es un enlace roto"
+  elif [ -L "$skill" ]; then
+    ok "Skill testigo-flows en $(display_path "$(claude_skills_dir)") (enlace a $(display_path "$(readlink "$skill")"))"
+  elif [ -f "$skill/SKILL.md" ]; then
+    ok "Skill testigo-flows en $(display_path "$(claude_skills_dir)")"
+  elif claude_cmd >/dev/null; then
+    info "Sin la skill testigo-flows (opcional, para escribir flows con IA): la instala testigo setup"
+  fi
 }
 
 # Los enlaces de las carpetas de skills, para saber si install.sh cambió alguno.
@@ -75,15 +129,15 @@ agents_run_skills_installer() {
   rm -f "$out"
   if [ "$status" -ne 0 ]; then
     error "Falló $dir/install.sh (código $status; el detalle está en el log)"
-    summary_add fallo "skills propias: falló $dir/install.sh"
+    summary_add fallo "skills HB: falló $dir/install.sh"
     next_step "Revisa el error de $dir/install.sh en el log y vuelve a correr dev-setup"
     return 0
   fi
   agents_skills_where
   if [ "$before" != "$(agents_links_snapshot)" ]; then
-    summary_add configurado "skills propias en ~/.claude/skills y ~/.agents/skills"
+    summary_add configurado "skills HB en ~/.claude/skills y ~/.agents/skills ($AGENT_SKILLS_LINKED)"
   elif [ "$mode" = install ]; then
-    summary_add ya "skills propias enlazadas"
+    summary_add ya "skills HB enlazadas ($AGENT_SKILLS_LINKED)"
   fi
 }
 
@@ -135,15 +189,16 @@ agents_ensure_testigo() {
 }
 
 agents_install() {
-  section "Skills propias (agent-skills)"
+  section "Skills HB (agent-skills)"
   agents_ensure_agent_skills
   section "testigo"
   agents_ensure_testigo
+  ! testigo_cmd >/dev/null || agents_testigo_skill
 }
 
 agents_update() {
   local dir before after
-  section "Skills propias (agent-skills)"
+  section "Skills HB (agent-skills)"
   dir="$(agent_skills_dir)"
   if [ -d "$dir/.git" ] && [ -x "$dir/install.sh" ]; then
     before="$(git -C "$dir" rev-parse HEAD 2>/dev/null || true)"
@@ -176,17 +231,18 @@ agents_update() {
     warn "Falta testigo"
     next_step "Para instalar testigo, corre dev-setup bootstrap"
   fi
+  ! testigo_cmd >/dev/null || agents_testigo_skill
 }
 
 agents_verify() { printf '%s\n' 'testigo --version'; }
 
 agents_doctor() {
   local dir testigo
-  section "Skills propias (agent-skills)"
+  section "Skills HB (agent-skills)"
   dir="$(agent_skills_dir)"
   if [ -d "$dir/.git" ] && [ -x "$dir/install.sh" ]; then
     ok "agent-skills en $dir"
-    agents_skills_where
+    agents_skills_detail
   elif [ -e "$dir" ]; then
     warn "$dir existe y no es un clon de agent-skills"
   else
@@ -195,6 +251,7 @@ agents_doctor() {
   section "testigo"
   if testigo="$(testigo_cmd)"; then
     if testigo_from_installer; then ok "testigo: $testigo (instalador oficial)"; else ok "testigo: $testigo"; fi
+    agents_testigo_skill
   else
     warn "Falta testigo"
   fi

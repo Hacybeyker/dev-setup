@@ -158,7 +158,8 @@ STUB
   mkdir -p "$HOME/Applications/App External.app"
 }
 
-# make_fake_agent_skills <carpeta>: un clon falso de agent-skills cuyo install.sh enlaza hb-fake.
+# make_fake_agent_skills <carpeta>: un clon falso de agent-skills con la skill hb-fake. Como el real, su install.sh
+# enlaza cada skill de skills/ en ~/.claude/skills y en ~/.agents/skills.
 make_fake_agent_skills() {
   mkdir -p "$1/.git" "$1/skills/hb-fake"
   printf -- '---\nname: hb-fake\n---\n' >"$1/skills/hb-fake/SKILL.md"
@@ -167,9 +168,14 @@ make_fake_agent_skills() {
 set -euo pipefail
 repo="$(cd "$(dirname "$0")" && pwd -P)"
 printf 'agent-skills install.sh\n' >>"$FAKE_LOG"
-mkdir -p "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
-ln -sfn "$repo/skills/hb-fake" "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills/hb-fake"
-echo "✔ ${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills/hb-fake"
+for dest in "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills" "$HOME/.agents/skills"; do
+  mkdir -p "$dest"
+  for skill in "$repo"/skills/*/; do
+    name="$(basename "$skill")"
+    ln -sfn "$repo/skills/$name" "$dest/$name"
+    echo "✔ $dest/$name"
+  done
+done
 [ -z "${FAKE_SKILLS_WARNING:-}" ] || echo "$FAKE_SKILLS_WARNING"
 SCRIPT
   chmod +x "$1/install.sh"

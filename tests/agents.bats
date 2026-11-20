@@ -6,33 +6,79 @@ setup() {
   export DEV_SETUP_SKIP_OS_CHECK=1
 }
 
-@test "doctor muestra agent-skills y cuantas skills estan enlazadas en cada carpeta" {
+@test "doctor lista cada skill HB y dice en que carpeta le falta el enlace" {
   run "$DEV_SETUP" doctor
   [ "$status" -eq 0 ]
+  [[ "$output" == *"==> Skills HB (agent-skills)"* ]]
   [[ "$output" == *"agent-skills en $DEV_SETUP_AGENT_SKILLS_DIR"* ]]
-  [[ "$output" == *"Enlazadas: 0/1 en ~/.claude/skills (Claude Code) y 0/1 en ~/.agents/skills"* ]]
+  [[ "$output" == *"hb-fake: falta su enlace en ~/.claude/skills y ~/.agents/skills"* ]]
   "$DEV_SETUP" bootstrap >/dev/null
   run "$DEV_SETUP" doctor
-  [[ "$output" == *"Enlazadas: 1/1 en ~/.claude/skills (Claude Code)"* ]]
+  [[ "$output" == *"✔ hb-fake"* ]]
+  [[ "$output" == *"Enlazadas en ~/.claude/skills (Claude Code) y ~/.agents/skills (Copilot, Junie, Codex y Gemini en Android Studio)"* ]]
+  rm "$HOME/.agents/skills/hb-fake"
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"hb-fake: falta su enlace en ~/.agents/skills"* ]]
 }
 
-@test "bootstrap dice donde quedan las skills propias y solo muestra los avisos de install.sh" {
+@test "bootstrap muestra las skills HB en una linea y solo los avisos de install.sh" {
   export FAKE_SKILLS_WARNING="⚠️  algo existe y no es un enlace: no lo toco"
   run "$DEV_SETUP" bootstrap
   [ "$status" -eq 0 ]
-  [[ "$output" == *"~/.agents/skills (Copilot, Junie, Codex y Gemini en Android Studio)"* ]]
+  [[ "$output" == *"==> Skills HB (agent-skills)"* ]]
+  [[ "$output" == *"1 enlazada en ~/.claude/skills y ~/.agents/skills: hb-fake"* ]]
   [[ "$output" == *"algo existe y no es un enlace"* ]]
   [[ "$output" != *"✔ $HOME/.claude/skills/hb-fake"* ]]
   grep -q "✔ $HOME/.claude/skills/hb-fake" "$HOME"/Library/Logs/dev-setup/*.log
-  [[ "$output" == *"Configurado:"*"skills propias en ~/.claude/skills y ~/.agents/skills"* ]]
+  [[ "$output" == *"Configurado:"*"skills HB en ~/.claude/skills y ~/.agents/skills (1)"* ]]
 }
 
-@test "si los enlaces ya estaban, las skills propias no quedan como configuradas" {
+@test "la lista de skills HB sale del clon: una skill nueva aparece sola" {
+  mkdir -p "$DEV_SETUP_AGENT_SKILLS_DIR/skills/hb-otra" "$DEV_SETUP_AGENT_SKILLS_DIR/skills/sin-skill-md"
+  printf -- '---\nname: hb-otra\n---\n' >"$DEV_SETUP_AGENT_SKILLS_DIR/skills/hb-otra/SKILL.md"
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"2 enlazadas en ~/.claude/skills y ~/.agents/skills: hb-fake, hb-otra"* ]]
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"✔ hb-fake"*"✔ hb-otra"* ]]
+  [[ "$output" != *"sin-skill-md"* ]]
+}
+
+@test "si los enlaces ya estaban, las skills HB no quedan como configuradas" {
   "$DEV_SETUP" bootstrap >/dev/null
   run "$DEV_SETUP" bootstrap
   [ "$status" -eq 0 ]
-  [[ "$output" != *"skills propias en ~/.claude/skills y ~/.agents/skills"* ]]
-  [[ "$output" == *"Ya estaba (se respetó):"*"skills propias enlazadas"* ]]
+  [[ "$output" != *"skills HB en ~/.claude/skills y ~/.agents/skills"* ]]
+  [[ "$output" == *"Ya estaba (se respetó):"*"skills HB enlazadas (1)"* ]]
+}
+
+@test "la seccion testigo muestra la skill testigo-flows, copiada o enlazada" {
+  skill="$HOME/.claude/skills/testigo-flows"
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"Sin la skill testigo-flows (opcional, para escribir flows con IA): la instala testigo setup"* ]]
+  mkdir -p "$skill"
+  printf -- '---\nname: testigo-flows\n---\n' >"$skill/SKILL.md"
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"==> testigo"*"Skill testigo-flows en ~/.claude/skills"* ]]
+  [[ "$output" != *"(enlace a"* ]]
+  run "$DEV_SETUP" bootstrap
+  [[ "$output" == *"==> testigo"*"Skill testigo-flows en ~/.claude/skills"* ]]
+  mv "$skill" "$BATS_TEST_TMPDIR/testigo-flows"
+  ln -s "$BATS_TEST_TMPDIR/testigo-flows" "$skill"
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"Skill testigo-flows en ~/.claude/skills (enlace a $BATS_TEST_TMPDIR/testigo-flows)"* ]]
+  rm -rf "$BATS_TEST_TMPDIR/testigo-flows"
+  run "$DEV_SETUP" doctor
+  [[ "$output" == *"Skill testigo-flows: ~/.claude/skills/testigo-flows es un enlace roto"* ]]
+  [ -L "$skill" ]
+}
+
+@test "sin Claude Code ni la skill, la seccion testigo no habla de testigo-flows" {
+  rm "$STUBS/claude"
+  run "$DEV_SETUP" doctor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"==> testigo"* ]]
+  [[ "$output" != *"testigo-flows"* ]]
 }
 
 @test "sin el grupo skills no clona agent-skills ni instala testigo" {
