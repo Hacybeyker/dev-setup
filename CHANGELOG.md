@@ -6,6 +6,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-20
+
 ### Changed
 
 - `bootstrap` muestra las skills oficiales de Android en una línea por agente: cuántas ya estaban y cuáles instaló. `doctor` sigue mostrando cada una, y el log también.
@@ -93,7 +95,8 @@ Primera versión publicada.
 - Cambios seguros: nunca desinstala, borra, usa `--force` ni `sudo`. En los archivos de configuración solo agrega lo que falta, con respaldo, diff y confirmación. Todo queda en `~/Library/Logs/dev-setup/`.
 - Tests con bats-core y CI en Linux y en macOS con el Bash 3.2 del sistema.
 
-[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/Hacybeyker/dev-setup/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.1...v1.2.0
