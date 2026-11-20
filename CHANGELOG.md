@@ -6,6 +6,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-20
+
 ### Added
 
 - `bootstrap` pregunta qué instalar la primera vez, con un valor por defecto para cada grupo. Nuevos grupos: `android`, `emulator`, `ide`, `github`, `skills` y `claude` (por defecto sí) y `dev-tools` (por defecto no). Siempre se instalan las Command Line Tools, Homebrew, `jq`, el comando `dev-setup` y el bloque del shell. Un `local.env` anterior sigue igual: los grupos nuevos usan su valor por defecto.
@@ -81,7 +83,8 @@ Primera versión publicada.
 - Cambios seguros: nunca desinstala, borra, usa `--force` ni `sudo`. En los archivos de configuración solo agrega lo que falta, con respaldo, diff y confirmación. Todo queda en `~/Library/Logs/dev-setup/`.
 - Tests con bats-core y CI en Linux y en macOS con el Bash 3.2 del sistema.
 
-[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/Hacybeyker/dev-setup/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Hacybeyker/dev-setup/compare/v1.1.0...v1.1.1
