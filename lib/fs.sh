@@ -2,6 +2,7 @@
 # Cambios seguros en archivos del usuario: respaldo, diff, confirmación y bloque administrado.
 
 new_temp_file() { mktemp "${TMPDIR:-/tmp}/dev-setup.XXXXXX"; }
+new_temp_dir() { mktemp -d "${TMPDIR:-/tmp}/dev-setup.XXXXXX"; }
 
 # backup_file <archivo>: lo copia a <archivo>.bak-<AAAAMMDD-HHMMSS> sin pisar respaldos previos.
 backup_file() {

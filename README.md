@@ -35,7 +35,7 @@ Todas las opciones: `dev-setup --help`. Con `-y` acepta las confirmaciones sin p
 ### Día a día
 
 ```bash
-dev-setup update   # Homebrew, Android CLI, SDK, skills, trace_processor, plugins de Claude Code, nvm y los repos que falten
+dev-setup update   # Homebrew, Android CLI, SDK, skills, trace_processor, ffmpeg, plugins de Claude Code, nvm y los repos que falten
 ```
 
 ### Pasar a una versión nueva de dev-setup
@@ -66,7 +66,7 @@ Usa la carpeta de `DEV_SETUP_DIR` si elegiste otra. Tu `local.env` y tu `repos.t
 
 | Grupo | Por defecto | Qué instala |
 | --- | --- | --- |
-| `android` | sí | Android CLI y SDK (platform-tools, cmdline-tools, build-tools y la última plataforma estable; lista en `android/sdk-packages.txt`), las skills oficiales de Android para los agentes que elijas, la memoria de Android Studio y `trace_processor` de [Perfetto](https://perfetto.dev) (analizar trazas con SQL; lo usa la skill `hb-performance`), en `~/.local/bin` y sin root |
+| `android` | sí | Android CLI y SDK (platform-tools, cmdline-tools, build-tools y la última plataforma estable; lista en `android/sdk-packages.txt`), las skills oficiales de Android para los agentes que elijas, la memoria de Android Studio, y dos herramientas para la skill `hb-performance`, en `~/.local/bin` y sin root: `trace_processor` de [Perfetto](https://perfetto.dev) (analizar trazas con SQL) y un build estático de `ffmpeg` (el video de evidencia de la corrida de prueba; versión fijada en `ffmpeg/builds.txt` y verificada por SHA256) |
 | `emulator` | sí | El emulador de Android y su imagen de sistema (Google Play, arm64, páginas de 16 KB): unos 3 GB. Solo se pregunta con `android` |
 | `ide` | sí | Temurin 21 (LTS), el JDK para la terminal (`./gradlew`, Android CLI), y JetBrains Toolbox, para instalar Android Studio y los demás IDEs de JetBrains |
 | `github` | sí | GitHub CLI (`gh`) |
@@ -109,7 +109,7 @@ Si el instalador oficial de una herramienta falla (por ejemplo, porque la red de
 dev-setup **no rompe lo que ya funciona**:
 
 - Si algo ya está instalado, se haya instalado como se haya instalado, no lo reinstala, no lo mueve ni lo reemplaza: solo lo reporta. Antes de instalar cada herramienta del `Brewfile` busca el comando en el `PATH`, la app en `/Applications` o el JDK.
-- `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` (para los agentes donde ya están), el `trace_processor` que instaló dev-setup y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
+- `update` solo actualiza lo que dev-setup gestiona: lo que Homebrew instaló del `Brewfile`, el Android CLI, los paquetes del SDK de `android/sdk-packages.txt`, las skills de `android/skills.txt` (para los agentes donde ya están), el `trace_processor` y el `ffmpeg` que instaló dev-setup (el `ffmpeg`, cuando cambia su versión en `ffmpeg/builds.txt`) y nvm, si lo instaló su instalador y es más antiguo (nunca baja de versión). Lo instalado de otra forma se actualiza por su cuenta.
 - Si una skill que trae Android Studio también está copiada en `~/.agents/skills` (suele dejarla `android init`), `doctor` avisa que Android Studio la ve dos veces, si esa copia está desactualizada y cómo quitarla. No la borra: `~/.agents/skills` también lo leen otros agentes.
 - Nunca desinstala, nunca borra archivos, nunca usa `--force` y nunca llama a `sudo`: si algo lo necesita, te dice el comando.
 - Respeta tus valores de `JAVA_HOME`, `ANDROID_HOME` y `git config`.

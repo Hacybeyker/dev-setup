@@ -1,0 +1,11 @@
+# Build estático de ffmpeg que instala dev-setup en ~/.local/bin, sin root. Lo usa la skill hb-performance
+# para el video de evidencia: concat, pad, drawbox, drawtext y overlay. drawtext necesita libfreetype.
+#
+# Fuente: https://ffmpeg.martin-riedl.de (versión "release"). Los binarios de macOS vienen firmados y cada
+# archivo publica su SHA256 (<url>.sha256). Su versions.txt confirma --enable-libfreetype.
+#
+# Una línea por arquitectura (la de `uname -m`): <arquitectura> <versión> <url del zip> <sha256 del zip>
+# Para subir de versión, cambia las líneas: dev-setup update instala la nueva si la que tienes es otra.
+# Martin Riedl deja de publicar builds para Intel en enero de 2027.
+arm64 9.0.2 https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2/ffmpeg.zip c8ed4c4e6978a03c485edbfe4e0a5dc2380f8a30bba5150531b31b094492d924
+x86_64 9.0.2 https://ffmpeg.martin-riedl.de/download/macos/amd64/1789931006_9.0.2/ffmpeg.zip 7c6b4125b191cbf773832dc51f424cf2b6bb7da43007d1e066f95909e47cacd4
