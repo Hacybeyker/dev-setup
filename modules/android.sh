@@ -194,8 +194,30 @@ android_install_sdk() {
   fi
 }
 
+# android_skills_line <agente> <total> <ya estaban> <instaladas> <nombres de las instaladas>: una sola línea
+# por agente. Las que fallan ya tienen su propia línea de error.
+android_skills_line() {
+  local agent="$1" total="$2" present="$3" added="$4" names="$5" line=""
+  if [ "$present" -gt 0 ] && [ "$present" -eq "$total" ]; then
+    if [ "$total" -eq 1 ]; then line="1 ya está"; else line="las $total ya están"; fi
+  elif [ "$present" -eq 1 ]; then
+    line="1 ya estaba"
+  elif [ "$present" -gt 1 ]; then
+    line="$present ya estaban"
+  fi
+  if [ "$added" -gt 1 ] && [ "$added" -eq "$total" ]; then
+    line="las $total instaladas"
+  elif [ "$added" -eq 1 ]; then
+    line="${line:+$line, }1 instalada ($names)"
+  elif [ "$added" -gt 1 ]; then
+    line="${line:+$line, }$added instaladas ($names)"
+  fi
+  [ -z "$line" ] || ok "$agent: $line"
+}
+
+# Una línea por agente en pantalla; el detalle de cada skill queda en el log y en doctor.
 android_install_skills() {
-  local android agent agent_skills skill added present
+  local android agent agent_skills skill added present total names
   # Sin CLI (solo pasa en --dry-run, antes de instalarlo) todas las skills faltan.
   android="$(android_cmd)" || android=""
   android_warn_ignored_agents
@@ -205,24 +227,26 @@ android_install_skills() {
       android_warn_unknown_agent "$agent"
       continue
     fi
-    added=0 present=0
+    added=0 present=0 total=0 names=""
     while IFS= read -r skill <&3; do
+      total=$((total + 1))
       if skill_in_list "$skill" "$agent_skills"; then
-        ok "$skill ya está para $agent"
+        log_to_file INFO "$skill ya está para $agent"
         present=$((present + 1))
-      # Su salida (una línea por skill) va al log: en pantalla queda una línea por agente.
+      # Su salida (una línea por skill) va al log.
       elif run_logged "${android:-android}" skills add "--agent=$agent" "$skill"; then
         added=$((added + 1))
+        names="$names${names:+, }$skill"
       else
         error "No se pudo instalar la skill $skill para $agent: el detalle está en el log"
         summary_add fallo "skill oficial $skill para $agent"
       fi
     done 3< <(list_entries "$(android_data_dir)/skills.txt")
+    # En --dry-run no se instaló nada: run_logged solo mostró los comandos.
+    ! is_dry_run || added=0
     [ "$present" -eq 0 ] || summary_add ya "skills oficiales de Android para $agent ($present)"
-    if [ "$added" -gt 0 ] && ! is_dry_run; then
-      ok "Skills oficiales de Android instaladas para $agent ($added)"
-      summary_add instalado "skills oficiales de Android para $agent ($added)"
-    fi
+    [ "$added" -eq 0 ] || summary_add instalado "skills oficiales de Android para $agent ($added)"
+    android_skills_line "$agent" "$total" "$present" "$added" "$names"
   done 4< <(android_skill_agent_list)
 }
 

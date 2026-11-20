@@ -22,11 +22,11 @@ group_var() { printf 'DEV_SETUP_%s' "$(printf '%s' "$1" | tr '[:lower:]-' '[:upp
 
 group_description() {
   case "$1" in
-    android) printf 'Android CLI, SDK, skills oficiales de Android, memoria de Android Studio y trace_processor de Perfetto' ;;
+    android) printf 'Android CLI, SDK, skills oficiales de Android, memoria de Android Studio, trace_processor de Perfetto y ffmpeg' ;;
     emulator) printf 'emulador de Android y su imagen de sistema; unos 3 GB' ;;
     ide) printf 'Temurin 21, el JDK para la terminal, y JetBrains Toolbox, para instalar Android Studio' ;;
     github) printf 'GitHub CLI (gh)' ;;
-    skills) printf 'skills propias de agent-skills y testigo, para pruebas E2E con Maestro' ;;
+    skills) printf 'skills HB de agent-skills y testigo, para pruebas E2E con Maestro' ;;
     claude) printf 'Claude Code, con sus plugins y su configuración' ;;
     node) printf 'nvm, Node.js LTS y pnpm' ;;
     ios) printf 'revisa Xcode para el target iOS de KMP, sin instalar nada' ;;

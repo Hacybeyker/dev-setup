@@ -6,6 +6,16 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 ## [Unreleased]
 
+### Changed
+
+- `bootstrap` muestra las skills oficiales de Android en una línea por agente: cuántas ya estaban y cuáles instaló. `doctor` sigue mostrando cada una, y el log también.
+- Las skills propias de agent-skills pasan a llamarse "skills HB". `doctor` lista cada una y avisa en qué carpeta le falta el enlace; `bootstrap` y `update` las muestran en una línea, con sus nombres. La lista sale del clon de agent-skills: una skill nueva aparece sola.
+- La sección `testigo` muestra si está la skill `testigo-flows` en `~/.claude/skills` (copiada por `testigo setup` o como enlace), o que es opcional si falta.
+
+### Fixed
+
+- La descripción del grupo `android` (en `doctor`, en la pregunta de `bootstrap` y en `local.env.example`) no mencionaba `ffmpeg`.
+
 ## [1.4.0] - 2026-11-20
 
 ### Added
