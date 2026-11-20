@@ -43,9 +43,16 @@ printf 'brew %s\n' "$*" >>"$FAKE_LOG"
 case "$1" in
   list)
     case "$2" in --formula) installed="$FAKE_BREW_FORMULAE" ;; *) installed="$FAKE_BREW_CASKS" ;; esac
-    case " $installed " in *" $4 "*) echo "$4 1.0"; exit 0 ;; esac
+    case " $installed " in *" $4 "*)
+      if [ -e "$FAKE_LOG.upgraded-$4" ]; then echo "$4 2.0"; else echo "$4 1.0"; fi
+      exit 0
+      ;;
+    esac
     exit 1
     ;;
+  # Con versión nueva: los de FAKE_BREW_OUTDATED que se piden. Lo que se actualiza pasa a la 2.0.
+  outdated) for name in ${FAKE_BREW_OUTDATED:-}; do case " $* " in *" $name "*) echo "$name" ;; esac; done ;;
+  upgrade) shift 2; for name in "$@"; do : >"$FAKE_LOG.upgraded-$name"; done ;;
   --version) echo "Homebrew 9.9.9" ;;
   shellenv) echo ":" ;;
 esac
@@ -155,6 +162,8 @@ repo="$(cd "$(dirname "$0")" && pwd -P)"
 printf 'agent-skills install.sh\n' >>"$FAKE_LOG"
 mkdir -p "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 ln -sfn "$repo/skills/hb-fake" "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills/hb-fake"
+echo "✔ ${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills/hb-fake"
+[ -z "${FAKE_SKILLS_WARNING:-}" ] || echo "$FAKE_SKILLS_WARNING"
 SCRIPT
   chmod +x "$1/install.sh"
 }

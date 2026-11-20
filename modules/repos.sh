@@ -51,14 +51,22 @@ repos_each() {
 repo_clone() {
   local url="$1" dest="$2"
   case "$(repo_state "$dest")" in
-    cloned) ok "$(basename "$dest") en $dest" ;;
-    occupied) warn "$dest ya existe y no es un clon: no se toca" ;;
+    cloned)
+      ok "$(basename "$dest") en $dest"
+      summary_add ya "repo $(basename "$dest")"
+      ;;
+    occupied)
+      warn "$dest ya existe y no es un clon: no se toca"
+      summary_add ya "$dest (no es un clon: no se tocó)"
+      ;;
     missing)
       # Sin preguntas de usuario y contraseña: si no hay sesión, falla y queda como paso pendiente.
       if run_cmd env GIT_TERMINAL_PROMPT=0 git clone --quiet -- "$url" "$dest"; then
         is_dry_run || ok "$(basename "$dest") clonado en $dest"
+        is_dry_run || summary_add instalado "repo $(basename "$dest") en $dest"
       else
         warn "No se pudo clonar $url"
+        summary_add fallo "repo $(basename "$dest"): no se pudo clonar"
         REPOS_FAILED="$REPOS_FAILED${REPOS_FAILED:+, }$(basename "$dest")"
       fi
       ;;

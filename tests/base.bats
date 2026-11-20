@@ -39,14 +39,66 @@ setup() {
 }
 
 @test "update solo actualiza lo que gestiona Homebrew" {
-  export FAKE_BREW_CASKS="app-managed"
+  export FAKE_BREW_CASKS="app-managed" FAKE_BREW_OUTDATED="tool-managed"
   run "$DEV_SETUP" update
   [ "$status" -eq 0 ]
   grep -qx 'brew update' "$FAKE_LOG"
   grep -qx 'brew upgrade --formula tool-managed' "$FAKE_LOG"
   [ "$(grep -c 'brew upgrade --cask' "$FAKE_LOG")" -eq 0 ]
   [ "$(grep -c 'brew install' "$FAKE_LOG")" -eq 0 ]
-  [[ "$output" == *"tool-missing: falta, corre dev-setup bootstrap"* ]]
+  [[ "$output" == *"tool-missing: falta"* ]]
+  [[ "$output" == *"Actualizado:"$'\n'"      tool-managed 1.0 → 2.0"* ]]
+}
+
+@test "update no le pide a Homebrew actualizar lo que ya esta al dia" {
+  run "$DEV_SETUP" update
+  [ "$status" -eq 0 ]
+  grep -qx 'brew outdated --formula --quiet tool-managed' "$FAKE_LOG"
+  [ "$(grep -c 'brew upgrade' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" == *"Revisado (se actualizó si había versión nueva):"$'\n'"      tool-managed"* ]]
+}
+
+@test "bootstrap corre un solo brew update, antes de instalar, con su salida en el log" {
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [ "$(grep -cx 'brew update' "$FAKE_LOG")" -eq 1 ]
+  [ "$(grep -n 'brew update' "$FAKE_LOG" | cut -d: -f1)" -lt "$(grep -n 'brew install' "$FAKE_LOG" | head -n 1 | cut -d: -f1)" ]
+}
+
+@test "si brew install falla, avisa y sigue con lo demas" {
+  make_stub brew <<'STUB'
+printf 'brew %s\n' "$*" >>"$FAKE_LOG"
+case "$1" in
+  list) [ "$4" = tool-managed ] && { echo "tool-managed 1.0"; exit 0; }; exit 1 ;;
+  install) [ "$2" = tool-missing ] && exit 1 ;;
+esac
+exit 0
+STUB
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"No se pudo instalar tool-missing con Homebrew; se sigue con lo demás"* ]]
+  [[ "$output" == *"Falló:"$'\n'"      tool-missing: falló brew install tool-missing"* ]]
+  [[ "$output" == *"==> Shell"* ]]
+}
+
+@test "dev-setup corre Homebrew sin auto update ni limpieza" {
+  make_stub brew <<'STUB'
+printf 'brew %s %s%s%s\n' "$1" "$HOMEBREW_NO_AUTO_UPDATE" "$HOMEBREW_NO_INSTALL_CLEANUP" "$HOMEBREW_NO_ENV_HINTS" >>"$FAKE_LOG"
+[ "$1" != list ] || exit 1
+exit 0
+STUB
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  grep -qx 'brew install 111' "$FAKE_LOG"
+}
+
+@test "base_verify lista los comandos de lo que se elige del Brewfile" {
+  load_libs
+  run base_verify
+  [[ "$output" == *"brew --version"* ]]
+  [[ "$output" == *"tool-managed-bin --version"* ]]
+  [[ "$output" == *"java -version"* ]]
+  [[ "$output" != *"App Optional"* ]]
 }
 
 @test "sin Homebrew, bootstrap --dry-run muestra su instalador oficial" {

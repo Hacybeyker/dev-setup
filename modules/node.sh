@@ -37,11 +37,13 @@ node_other_manager() {
   return 1
 }
 
-# Instala nvm en nvm_dir, fijado a NVM_VERSION. PROFILE=/dev/null evita que toque ~/.zshrc.
+# Instala nvm en nvm_dir, fijado a NVM_VERSION. PROFILE=/dev/null evita que toque el perfil del shell.
 nvm_run_installer() {
   if ! run_cmd mkdir -p "$(nvm_dir)" ||
     ! run_remote_installer "$NVM_INSTALL_URL" "NVM_DIR=$(nvm_dir)" PROFILE=/dev/null; then
     warn "No se pudo instalar nvm $NVM_VERSION"
+    installer_failed "nvm $NVM_VERSION"
+    return 1
   fi
 }
 
@@ -51,24 +53,35 @@ node_install() {
   section "Node.js (grupo node)"
   if nvm_installed; then
     ok "nvm en $(nvm_dir)"
+    summary_add ya "nvm"
   elif manager="$(node_other_manager)"; then
     ok "Node.js lo gestiona $manager: no se instala nvm"
+    summary_add ya "Node.js (lo gestiona $manager)"
     return 0
   elif node_bin="$(node_path)"; then
     ok "Node.js $(node --version 2>/dev/null) en $node_bin: se respeta y no se instala nvm"
+    summary_add ya "Node.js $(node --version 2>/dev/null) (fuera de nvm)"
     return 0
   else
-    nvm_run_installer
+    nvm_run_installer || return 0
     is_dry_run || nvm_installed || return 0
+    is_dry_run || summary_add instalado "nvm $NVM_VERSION"
   fi
 
   if [ -n "$(node_versions_in_nvm)" ]; then
     ok "Node.js en nvm: $(node_versions_in_nvm)"
+    summary_add ya "Node.js en nvm ($(node_versions_in_nvm))"
   elif node_bin="$(node_path)"; then
     ok "Node.js $(node --version 2>/dev/null) en $node_bin: se respeta"
+    summary_add ya "Node.js $(node --version 2>/dev/null)"
   else
     # shellcheck disable=SC2016
-    run_cmd /bin/bash -c '. "$1/nvm.sh" && nvm install --lts' _ "$(nvm_dir)" || warn "No se pudo instalar Node.js LTS"
+    if run_cmd /bin/bash -c '. "$1/nvm.sh" && nvm install --lts' _ "$(nvm_dir)"; then
+      is_dry_run || summary_add instalado "Node.js LTS ($(node_versions_in_nvm))"
+    else
+      warn "No se pudo instalar Node.js LTS"
+      summary_add fallo "Node.js LTS: falló nvm install --lts"
+    fi
   fi
 }
 
@@ -87,12 +100,16 @@ node_update() {
     warn "No se pudo leer la versión de nvm en $(nvm_dir)"
   elif ! version_lt "$version" "$NVM_VERSION"; then
     ok "nvm $version"
+    summary_add revisado "nvm $version"
   elif [ -d "$(nvm_dir)/.git" ]; then
-    nvm_run_installer
+    if nvm_run_installer && ! is_dry_run; then summary_add actualizado "nvm $version → $NVM_VERSION"; fi
   else
     info "nvm $version no se instaló con su instalador: se actualiza por su cuenta"
+    summary_add ya "nvm $version (se actualiza por su cuenta)"
   fi
 }
+
+node_verify() { printf '%s\n' 'node --version'; }
 
 node_doctor() {
   local manager node_bin version
@@ -118,7 +135,7 @@ node_doctor() {
   fi
 }
 
-# Carga nvm en zsh si el grupo está activo y nada lo cargó antes.
+# Carga nvm en el shell si el grupo está activo y nada lo cargó antes.
 node_shell() {
   group_enabled node || return 0
   # shellcheck disable=SC2016

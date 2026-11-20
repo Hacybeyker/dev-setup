@@ -2,7 +2,7 @@
 # Perfetto: trace_processor, para analizar trazas de rendimiento con SQL (lo usa la skill hb-performance de
 # agent-skills). Es el script oficial de Python: la primera vez que corre baja el binario nativo, fijado a una
 # versión y verificado por sha256, a ~/.local/share/perfetto/prebuilts. Va en ~/.local/bin, sin root; el bloque
-# de ~/.zshrc ya pone esa carpeta en el PATH.
+# del shell ya pone esa carpeta en el PATH.
 
 TRACE_PROCESSOR_URL="https://get.perfetto.dev/trace_processor"
 
@@ -43,6 +43,7 @@ trace_processor_verify() {
   if ! out="$("$1" --version </dev/null 2>&1)"; then
     log_to_file ERROR "falló: $1 --version"
     warn "trace_processor --version falló: revisa tu conexión y que python3 funcione"
+    summary_add fallo "trace_processor --version (revisa tu conexión y python3)"
     next_step "Revisa por qué falla trace_processor --version y vuelve a correr dev-setup"
     return 0
   fi
@@ -52,11 +53,13 @@ trace_processor_verify() {
 }
 
 # Descarga el script oficial y lo instala o actualiza en ~/.local/bin. Si ya está igual, no cambia nada.
+# perfetto_ensure_trace_processor [install|update]: solo cambia cómo queda en el resumen si ya estaba al día.
 perfetto_ensure_trace_processor() {
-  local dest new before after
+  local mode="${1:-install}" dest new before after
   dest="$(trace_processor_path)"
   if ! command -v python3 >/dev/null 2>&1; then
     warn "Falta python3 (viene con las Command Line Tools): no se instala trace_processor"
+    summary_add fallo "trace_processor: falta python3"
     return 0
   fi
   if is_dry_run; then
@@ -68,12 +71,14 @@ perfetto_ensure_trace_processor() {
   if ! run_cmd curl -fsSL -o "$new" "$TRACE_PROCESSOR_URL"; then
     rm -f "$new"
     warn "No se pudo descargar $TRACE_PROCESSOR_URL"
+    summary_add fallo "trace_processor: no se pudo descargar de $(url_host "$TRACE_PROCESSOR_URL")"
     next_step "Cuando tengas conexión, vuelve a correr dev-setup: no se pudo descargar trace_processor"
     return 0
   fi
   if ! trace_processor_is_official "$new"; then
     rm -f "$new"
     warn "Lo descargado de $TRACE_PROCESSOR_URL no es el script de Perfetto: no se instala"
+    summary_add fallo "trace_processor: lo descargado no es el script de Perfetto"
     next_step "Revisa $TRACE_PROCESSOR_URL y vuelve a correr dev-setup: no se instaló trace_processor"
     return 0
   fi
@@ -81,18 +86,26 @@ perfetto_ensure_trace_processor() {
   if [ -f "$dest" ] && cmp -s "$new" "$dest"; then
     rm -f "$new"
     ok "trace_processor ${after:-} ya está al día en $dest"
+    if [ "$mode" = update ]; then
+      summary_add revisado "trace_processor ${after:-}"
+    else
+      summary_add ya "trace_processor ${after:-}"
+    fi
   else
     before="$(trace_processor_script_version "$dest")"
     if ! run_cmd mkdir -p "$(dirname "$dest")" || ! run_cmd install -m 0755 "$new" "$dest"; then
       rm -f "$new"
       warn "No se pudo instalar trace_processor en $dest"
+      summary_add fallo "trace_processor: no se pudo copiar a $dest"
       return 0
     fi
     rm -f "$new"
     if [ -n "$before" ]; then
       ok "trace_processor actualizado: $before → ${after:-?}"
+      summary_add actualizado "trace_processor $before → ${after:-?}"
     else
       ok "trace_processor ${after:-} instalado en $dest"
+      summary_add instalado "trace_processor ${after:-}"
     fi
   fi
   trace_processor_verify "$dest"
@@ -111,12 +124,20 @@ trace_processor_state() {
   fi
 }
 
+perfetto_respect_foreign() {
+  warn "$(trace_processor_path) no es el trace_processor oficial de Perfetto: no se toca"
+  summary_add ya "$(trace_processor_path) (no es el de Perfetto: no se tocó)"
+}
+
 perfetto_install() {
   section "Perfetto (trace_processor)"
   case "$(trace_processor_state)" in
-    ajeno) warn "$(trace_processor_path) no es el trace_processor oficial de Perfetto: no se toca" ;;
-    externo) ok "trace_processor en $(command -v trace_processor), instalado fuera de dev-setup: se respeta" ;;
-    *) perfetto_ensure_trace_processor ;;
+    ajeno) perfetto_respect_foreign ;;
+    externo)
+      ok "trace_processor en $(command -v trace_processor), instalado fuera de dev-setup: se respeta"
+      summary_add ya "trace_processor (fuera de dev-setup)"
+      ;;
+    *) perfetto_ensure_trace_processor install ;;
   esac
 }
 
@@ -124,12 +145,20 @@ perfetto_install() {
 perfetto_update() {
   section "Perfetto (trace_processor)"
   case "$(trace_processor_state)" in
-    propio) perfetto_ensure_trace_processor ;;
-    ajeno) warn "$(trace_processor_path) no es el trace_processor oficial de Perfetto: no se toca" ;;
-    externo) info "trace_processor instalado fuera de dev-setup: se actualiza por su cuenta" ;;
-    falta) warn "Falta trace_processor: corre dev-setup bootstrap" ;;
+    propio) perfetto_ensure_trace_processor update ;;
+    ajeno) perfetto_respect_foreign ;;
+    externo)
+      info "trace_processor instalado fuera de dev-setup: se actualiza por su cuenta"
+      summary_add ya "trace_processor (fuera de dev-setup, se actualiza por su cuenta)"
+      ;;
+    falta)
+      warn "Falta trace_processor"
+      next_step "Para instalar trace_processor, corre dev-setup bootstrap"
+      ;;
   esac
 }
+
+perfetto_verify() { printf '%s\n' 'trace_processor --version'; }
 
 # Solo lectura: no lo ejecuta, porque la primera vez descargaría el binario.
 perfetto_doctor() {

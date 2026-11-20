@@ -57,15 +57,23 @@ setup() {
   grep -qx 'claude plugin marketplace update market-installed' "$FAKE_LOG"
   grep -qx 'claude plugin update plugin-installed@market-installed' "$FAKE_LOG"
   [ "$(grep -c 'claude plugin update' "$FAKE_LOG")" -eq 1 ]
-  [[ "$output" == *"plugin-missing@market-installed: falta, corre dev-setup bootstrap"* ]]
+  [[ "$output" == *"plugin-missing@market-installed: falta"* ]]
 }
 
 @test "update actualiza con Homebrew un Claude Code instalado con su cask" {
-  export FAKE_BREW_CASKS="claude-code"
+  export FAKE_BREW_CASKS="claude-code" FAKE_BREW_OUTDATED="claude-code"
   run "$DEV_SETUP" update
   [ "$status" -eq 0 ]
   grep -qx 'brew upgrade --cask claude-code' "$FAKE_LOG"
   [ "$(grep -c '^claude update' "$FAKE_LOG")" -eq 0 ]
+}
+
+@test "update no pide actualizar la cask de Claude Code si ya esta al dia" {
+  export FAKE_BREW_CASKS="claude-code"
+  run "$DEV_SETUP" update
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'brew upgrade --cask claude-code' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" == *"plugin-installed@market-installed revisado"* ]]
 }
 
 @test "bootstrap --yes crea settings.json con la atribucion vacia y las carpetas de skills" {
@@ -164,7 +172,31 @@ setup() {
   run "$DEV_SETUP" bootstrap --yes
   [ "$status" -eq 0 ]
   [[ "$output" == *"No se pudo descargar https://claude.ai/install.sh"* ]]
-  [[ "$output" == *"Sin Claude Code se saltan sus plugins"* ]]
+  [[ "$output" == *"Sin Claude Code se saltan su configuración y sus plugins"* ]]
   [ "$(grep -c 'plugin install' "$FAKE_LOG")" -eq 0 ]
+  [ ! -e "$HOME/.claude/settings.json" ]
   [[ "$output" == *"==> Shell"* ]]
+  [[ "$output" == *"Lo que te toca"*"brew install --cask claude-code"* ]]
+  [ "$(grep -c 'brew install --cask claude-code' "$FAKE_LOG")" -eq 0 ]
+}
+
+@test "si la red rechaza claude.ai, lo dice con el codigo HTTP" {
+  rm "$STUBS/claude"
+  make_stub curl <<'STUB'
+printf 'curl %s\n' "$*" >>"$FAKE_LOG"
+echo "curl: (22) The requested URL returned error: 403" >&2
+exit 22
+STUB
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Falló:"*"      Claude Code: claude.ai rechazó la descarga (HTTP 403): puede que tu red o un proxy lo bloquee"* ]]
+}
+
+@test "sin el grupo claude no instala ni configura Claude Code" {
+  rm "$STUBS/claude"
+  run "$DEV_SETUP" bootstrap --without claude
+  [ "$status" -eq 0 ]
+  [ "$(grep -c 'claude.ai' "$FAKE_LOG")" -eq 0 ]
+  [ ! -e "$HOME/.claude/settings.json" ]
+  [[ "$output" != *"claude auth login"* ]]
 }

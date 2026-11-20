@@ -40,11 +40,12 @@ accounts_doctor() {
   fi
 }
 
+# Solo recuerda las sesiones de lo que elegiste instalar.
 accounts_next_steps() {
-  if command -v gh >/dev/null 2>&1 && ! gh_logged_in; then
+  if group_enabled github && command -v gh >/dev/null 2>&1 && ! gh_logged_in; then
     next_step "Inicia sesión en GitHub: gh auth login"
   fi
-  if claude_cmd >/dev/null && ! claude_logged_in; then
+  if group_enabled claude && claude_cmd >/dev/null && ! claude_logged_in; then
     next_step "Inicia sesión en Claude Code: claude auth login"
   fi
 }

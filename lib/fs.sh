@@ -90,6 +90,14 @@ apply_file_change() {
   ok "$file actualizado"
 }
 
+# display_path <ruta>: la ruta con ~ en vez de la carpeta personal, para mostrarla.
+display_path() {
+  case "$1" in
+    "$HOME"/*) printf '%s/%s' "~" "${1#"$HOME"/}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
 # list_entries <archivo>: imprime las líneas útiles de una lista (sin comentarios ni líneas vacías).
 list_entries() {
   local line

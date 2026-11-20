@@ -6,13 +6,43 @@ setup() {
   export DEV_SETUP_SKIP_OS_CHECK=1
 }
 
-@test "doctor muestra agent-skills y cuantas skills estan enlazadas" {
+@test "doctor muestra agent-skills y cuantas skills estan enlazadas en cada carpeta" {
   run "$DEV_SETUP" doctor
   [ "$status" -eq 0 ]
-  [[ "$output" == *"agent-skills en $DEV_SETUP_AGENT_SKILLS_DIR (0/1 skills enlazadas en Claude Code)"* ]]
+  [[ "$output" == *"agent-skills en $DEV_SETUP_AGENT_SKILLS_DIR"* ]]
+  [[ "$output" == *"Enlazadas: 0/1 en ~/.claude/skills (Claude Code) y 0/1 en ~/.agents/skills"* ]]
   "$DEV_SETUP" bootstrap >/dev/null
   run "$DEV_SETUP" doctor
-  [[ "$output" == *"(1/1 skills enlazadas en Claude Code)"* ]]
+  [[ "$output" == *"Enlazadas: 1/1 en ~/.claude/skills (Claude Code)"* ]]
+}
+
+@test "bootstrap dice donde quedan las skills propias y solo muestra los avisos de install.sh" {
+  export FAKE_SKILLS_WARNING="⚠️  algo existe y no es un enlace: no lo toco"
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"~/.agents/skills (Copilot, Junie, Codex y Gemini en Android Studio)"* ]]
+  [[ "$output" == *"algo existe y no es un enlace"* ]]
+  [[ "$output" != *"✔ $HOME/.claude/skills/hb-fake"* ]]
+  grep -q "✔ $HOME/.claude/skills/hb-fake" "$HOME"/Library/Logs/dev-setup/*.log
+  [[ "$output" == *"Configurado:"*"skills propias en ~/.claude/skills y ~/.agents/skills"* ]]
+}
+
+@test "si los enlaces ya estaban, las skills propias no quedan como configuradas" {
+  "$DEV_SETUP" bootstrap >/dev/null
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"skills propias en ~/.claude/skills y ~/.agents/skills"* ]]
+  [[ "$output" == *"Ya estaba (se respetó):"*"skills propias enlazadas"* ]]
+}
+
+@test "sin el grupo skills no clona agent-skills ni instala testigo" {
+  rm -rf "$DEV_SETUP_AGENT_SKILLS_DIR"
+  rm "$STUBS/testigo"
+  run "$DEV_SETUP" bootstrap --without skills
+  [ "$status" -eq 0 ]
+  [ ! -e "$DEV_SETUP_AGENT_SKILLS_DIR" ]
+  [ "$(grep -c '^curl' "$FAKE_LOG")" -eq 0 ]
+  [[ "$output" == *"Omitido por tu elección:"*skills* ]]
 }
 
 @test "bootstrap corre install.sh del clon existente" {

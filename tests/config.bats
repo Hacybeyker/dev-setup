@@ -6,11 +6,27 @@ setup() {
   export DEV_SETUP_SKIP_OS_CHECK=1
 }
 
-@test "sin terminal, los grupos opcionales quedan desactivados" {
+@test "sin terminal, cada grupo queda con su valor por defecto" {
   run "$DEV_SETUP" bootstrap
   [ "$status" -eq 0 ]
-  grep -qx 'DEV_SETUP_AI_LOCAL=0' "$DEV_SETUP_LOCAL_ENV"
-  grep -qx 'DEV_SETUP_NODE=0' "$DEV_SETUP_LOCAL_ENV"
+  for key in ANDROID EMULATOR IDE GITHUB SKILLS CLAUDE; do grep -qx "DEV_SETUP_$key=1" "$DEV_SETUP_LOCAL_ENV"; done
+  for key in NODE IOS AI_LOCAL TERMINAL DEV_TOOLS; do grep -qx "DEV_SETUP_$key=0" "$DEV_SETUP_LOCAL_ENV"; done
+}
+
+@test "sin Android tampoco se instala el emulador" {
+  run "$DEV_SETUP" bootstrap --without android
+  [ "$status" -eq 0 ]
+  grep -qx 'DEV_SETUP_EMULATOR=0' "$DEV_SETUP_LOCAL_ENV"
+}
+
+@test "sin valor en local.env, un grupo usa su valor por defecto" {
+  load_libs
+  group_enabled android
+  group_enabled claude
+  ! group_enabled node
+  ! group_enabled dev-tools
+  DEV_SETUP_CLAUDE=0
+  ! group_enabled claude
 }
 
 @test "--with y --without se guardan en local.env" {
@@ -90,8 +106,15 @@ setup() {
 }
 
 @test "con los grupos ya elegidos no pregunta y dice cuales estan activos" {
-  printf 'DEV_SETUP_AI_LOCAL=0\nDEV_SETUP_TERMINAL=1\nDEV_SETUP_NODE=1\nDEV_SETUP_IOS=0\n' >"$DEV_SETUP_LOCAL_ENV"
+  for key in ANDROID EMULATOR IDE GITHUB SKILLS CLAUDE AI_LOCAL IOS DEV_TOOLS; do printf 'DEV_SETUP_%s=0\n' "$key"; done >"$DEV_SETUP_LOCAL_ENV"
+  printf 'DEV_SETUP_TERMINAL=1\nDEV_SETUP_NODE=1\n' >>"$DEV_SETUP_LOCAL_ENV"
   run "$DEV_SETUP" bootstrap
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Activos: terminal, node."* ]]
+  [[ "$output" == *"Activos: node, terminal."* ]]
+}
+
+@test "sin terminal dice que usa los valores por defecto" {
+  run "$DEV_SETUP" bootstrap
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Sin terminal para preguntar, se usan los valores por defecto. Activos: android, emulator, ide, github, skills, claude"* ]]
 }

@@ -32,6 +32,29 @@ make_fake_dev_setup_origin() {
   grep -qx 'dev-setup bootstrap --with node' "$FAKE_LOG"
 }
 
+@test "clona una etiqueta anotada sin avisos de git" {
+  git -C "$DEV_SETUP_REPO_URL" -c user.name=test -c user.email=test@example.com tag -a v9.9.8 -m anotada
+  export DEV_SETUP_REF=v9.9.8
+  run bash "$INSTALL"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"warning"* ]]
+  [[ "$output" != *"detached"* ]]
+  [ "$(git -C "$DEV_SETUP_DIR" describe --tags)" = v9.9.8 ]
+}
+
+@test "si la version no existe, se detiene sin dejar un clon a medias" {
+  export DEV_SETUP_REF=v0.0.0
+  run bash "$INSTALL"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"No existe la versión v0.0.0"* ]]
+  [ ! -e "$DEV_SETUP_DIR" ]
+  mkdir -p "$DEV_SETUP_DIR"
+  run bash "$INSTALL"
+  [ "$status" -eq 1 ]
+  [ -d "$DEV_SETUP_DIR" ]
+  [ -z "$(ls -A "$DEV_SETUP_DIR")" ]
+}
+
 @test "funciona llegando por un pipe" {
   run bash -c 'cat "$1" | bash -s -- --yes' _ "$INSTALL"
   [ "$status" -eq 0 ]

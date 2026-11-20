@@ -18,6 +18,10 @@ resolve_root() {
 DEV_SETUP_ROOT="$(resolve_root)"
 readonly DEV_SETUP_ROOT
 
+# Homebrew sin ruido: dev-setup corre un solo `brew update` antes de instalar y no limpia ni da consejos en
+# cada comando.
+export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ENV_HINTS=1
+
 # shellcheck source=lib/log.sh
 . "$DEV_SETUP_ROOT/lib/log.sh"
 # shellcheck source=lib/run.sh
@@ -33,8 +37,9 @@ readonly DEV_SETUP_ROOT
 # shellcheck source=lib/steps.sh
 . "$DEV_SETUP_ROOT/lib/steps.sh"
 
-# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update,
-# _shell (las líneas que aporta al bloque de ~/.zshrc) y _next_steps (lo que le toca al usuario).
+# Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update, _ask (preguntas
+# de bootstrap), _shell (las líneas que aporta al bloque del shell), _verify (comandos para comprobar lo
+# instalado) y _next_steps (lo que le toca al usuario).
 DEV_SETUP_MODULES="system base android studio perfetto agents claude node ios accounts repos"
 for module in $DEV_SETUP_MODULES; do
   # shellcheck source=/dev/null
@@ -53,12 +58,13 @@ Subcomandos:
 Opciones:
   --dry-run           Muestra lo que haría, sin cambiar nada.
   -y, --yes           Acepta las confirmaciones sin preguntar.
-  --with <grupo>      Activa un grupo opcional (se guarda en local.env).
-  --without <grupo>   Desactiva un grupo opcional (se guarda en local.env).
+  --with <grupo>      Instala ese grupo (se guarda en local.env).
+  --without <grupo>   No instala ese grupo (se guarda en local.env).
   -h, --help          Muestra esta ayuda.
   -V, --version       Muestra la versión.
 
-Grupos opcionales: $DEV_SETUP_GROUPS
+Grupos (bootstrap pregunta por cada uno la primera vez): $DEV_SETUP_GROUPS
+Siempre se instalan las Command Line Tools, Homebrew, jq y el comando dev-setup.
 USAGE
 }
 
@@ -68,12 +74,23 @@ die_usage() {
   exit 2
 }
 
+# Grupo del que depende cada módulo. Los demás corren siempre.
+module_group() {
+  case "$1" in
+    android | studio | perfetto) printf android ;;
+    agents) printf skills ;;
+    claude | node | ios) printf '%s' "$1" ;;
+  esac
+}
+
+# run_modules <acción>: corre <módulo>_<acción> en los módulos cuyo grupo está activado.
 run_modules() {
-  local action="$1" module
+  local action="$1" module group
   for module in $DEV_SETUP_MODULES; do
-    if declare -F "${module}_${action}" >/dev/null; then
-      "${module}_${action}"
-    fi
+    declare -F "${module}_${action}" >/dev/null || continue
+    group="$(module_group "$module")"
+    [ -z "$group" ] || group_enabled "$group" || continue
+    "${module}_${action}"
   done
 }
 
@@ -95,8 +112,10 @@ cmd_bootstrap() {
   is_dry_run || log_init bootstrap
   config_load
   config_apply_overrides
-  section "Grupos opcionales"
+  section "Qué instalar"
+  info "Siempre: Command Line Tools, Homebrew, jq, el comando dev-setup y el bloque del shell"
   config_ask_groups
+  run_modules ask
   config_save_groups
   run_modules install
   shell_apply
@@ -114,10 +133,14 @@ cmd_update() {
   finish
 }
 
+# Cierre: resumen, comandos para verificar y lo que le toca al usuario. En --dry-run no hay nada que resumir.
 finish() {
   if ! is_dry_run; then
     run_modules next_steps
     shell_next_steps
+    config_summary_skipped
+    print_summary
+    print_verify "$(run_modules verify)"
     print_next_steps
   fi
   section "Listo"

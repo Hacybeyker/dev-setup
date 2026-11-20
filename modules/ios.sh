@@ -13,6 +13,7 @@ ios_check() {
     return 0
   fi
   ok "Xcode en $app"
+  summary_add ya "Xcode"
   selected="$(xcode-select -p 2>/dev/null || true)"
   case "$selected" in
     "$app"/*) ok "xcode-select usa ese Xcode" ;;
@@ -24,6 +25,7 @@ ios_install() {
   if group_enabled ios; then ios_check; fi
 }
 ios_update() { ios_install; }
+ios_verify() { printf '%s\n' 'xcodebuild -version'; }
 
 ios_next_steps() {
   local app
