@@ -9,6 +9,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 ### Added
 
 - `bootstrap` pregunta qué instalar la primera vez, con un valor por defecto para cada grupo. Nuevos grupos: `android`, `emulator`, `ide`, `github`, `skills` y `claude` (por defecto sí) y `dev-tools` (por defecto no). Siempre se instalan las Command Line Tools, Homebrew, `jq`, el comando `dev-setup` y el bloque del shell. Un `local.env` anterior sigue igual: los grupos nuevos usan su valor por defecto.
+- ffmpeg: con el grupo `android`, `bootstrap` instala un build estático de `ffmpeg` en `~/.local/bin`, sin root ni Homebrew, para el video de evidencia de la skill `hb-performance`. La versión está fijada en `ffmpeg/builds.txt` y se verifica por SHA256 antes de instalar; después se comprueba que tenga el filtro `drawtext`. `update` lo actualiza solo si cambió la versión fijada. Uno instalado de otra forma se respeta y, si le falta `drawtext`, se avisa.
 - `bootstrap` pregunta para qué agentes instalar las skills oficiales de Android y propone los que encuentra en la máquina (Claude Code, Copilot, Junie, Codex, Gemini, Cursor u OpenCode).
 - `bootstrap` y `update` terminan con un resumen (instalado, actualizado, configurado, ya estaba, omitido, falló y cambiado por un instalador externo) y con los comandos para verificar lo instalado, como `android -V` o `claude --version`.
 - Soporte para bash: con bash, el bloque va en `~/.bash_profile`.

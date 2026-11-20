@@ -40,7 +40,7 @@ export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_ENV_H
 # Módulos en orden de ejecución. Cada uno puede definir <módulo>_doctor, _install, _update, _ask (preguntas
 # de bootstrap), _shell (las líneas que aporta al bloque del shell), _verify (comandos para comprobar lo
 # instalado) y _next_steps (lo que le toca al usuario).
-DEV_SETUP_MODULES="system base android studio perfetto agents claude node ios accounts repos"
+DEV_SETUP_MODULES="system base android studio perfetto ffmpeg agents claude node ios accounts repos"
 for module in $DEV_SETUP_MODULES; do
   # shellcheck source=/dev/null
   . "$DEV_SETUP_ROOT/modules/$module.sh"
@@ -77,7 +77,7 @@ die_usage() {
 # Grupo del que depende cada módulo. Los demás corren siempre.
 module_group() {
   case "$1" in
-    android | studio | perfetto) printf android ;;
+    android | studio | perfetto | ffmpeg) printf android ;;
     agents) printf skills ;;
     claude | node | ios) printf '%s' "$1" ;;
   esac

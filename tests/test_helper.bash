@@ -132,6 +132,13 @@ STUB
   make_stub trace_processor <<'STUB'
 echo "Perfetto v59.1-stub"
 STUB
+  # ffmpeg ya está en el PATH, con drawtext: los tests de otros módulos no lo descargan.
+  make_stub ffmpeg <<'STUB'
+case "$*" in
+  *-filters*) echo " T. drawtext          V->V       Draw text on top of video frames using libfreetype library." ;;
+  *) echo "ffmpeg version 9.0.2-stub" ;;
+esac
+STUB
   # Red de seguridad: ningún test descarga nada. Con FAKE_INSTALLER_SCRIPT, curl "descarga" ese archivo en
   # la ruta de -o; sin él, falla como sin conexión.
   make_stub curl <<'STUB'
@@ -185,7 +192,7 @@ load_libs() {
     . "$REPO_ROOT/lib/$lib.sh"
   done
   local module
-  for module in system base android studio perfetto agents claude node ios accounts repos; do
+  for module in system base android studio perfetto ffmpeg agents claude node ios accounts repos; do
     # shellcheck source=/dev/null
     . "$REPO_ROOT/modules/$module.sh"
   done
