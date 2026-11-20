@@ -19,7 +19,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 - Un instalador oficial que falla dice el motivo: sin conexión, o el código HTTP con el que el servidor rechazó la descarga (por ejemplo, una red de empresa que bloquea claude.ai).
 - Homebrew corre un solo `brew update`, antes de la primera instalación y con su salida en el log, y sin limpieza ni consejos en cada comando. Si `brew install` falla, dev-setup avisa y sigue con lo demás.
 - Sin Claude Code, `bootstrap` no toca `~/.claude/settings.json`.
-- Menos ruido: `update` solo le pide a Homebrew actualizar lo que tiene versión nueva (sin avisos de "already installed") y muestra una línea por agente y por plugin. El detalle de las skills oficiales, los plugins de Claude Code y el `install.sh` de agent-skills queda en el log; en pantalla, solo sus avisos.
+- Menos ruido: `update` solo le pide a Homebrew actualizar lo que tiene versión nueva (sin avisos de "already installed") y muestra una línea por agente y por plugin. `bootstrap` también muestra una línea por agente al instalar las skills oficiales. El detalle de las skills oficiales, los plugins de Claude Code y el `install.sh` de agent-skills queda en el log; en pantalla, solo sus avisos.
 - `shellcheck` y `bats-core` pasan al grupo `dev-tools`, desactivado por defecto: solo hacen falta para contribuir a dev-setup. Si ya los tienes, siguen instalados.
 - `doctor` muestra cuántas skills propias están enlazadas en `~/.claude/skills` y en `~/.agents/skills`, que leen Copilot, Junie, Codex y Gemini en Android Studio.
 

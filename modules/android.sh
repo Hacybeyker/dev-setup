@@ -71,10 +71,12 @@ android_warn_ignored_agents() {
   esac
 }
 
-# Agentes que se ven en la máquina, para proponerlos en bootstrap. Sin ninguno, android-studio.
+# Agentes que se ven en la máquina, para proponerlos en bootstrap. Sin ninguno, android-studio. Claude Code
+# va si se eligió su grupo o si ya está instalado: ~/.claude no basta, porque lo crean los enlaces de
+# agent-skills.
 android_detect_agents() {
   local list=""
-  if group_enabled claude || [ -d "${CLAUDE_CONFIG_DIR:-$HOME/.claude}" ]; then list=claude-code; fi
+  if group_enabled claude || claude_cmd >/dev/null; then list=claude-code; fi
   if [ -d "$HOME/.copilot" ] || [ -d "$HOME/.config/github-copilot" ]; then list="$list${list:+,}github-copilot"; fi
   [ ! -d "$HOME/.junie" ] || list="$list${list:+,}junie"
   [ ! -d "$HOME/.codex" ] || list="$list${list:+,}codex"
@@ -208,15 +210,19 @@ android_install_skills() {
       if skill_in_list "$skill" "$agent_skills"; then
         ok "$skill ya está para $agent"
         present=$((present + 1))
-      elif run_cmd "${android:-android}" skills add "--agent=$agent" "$skill"; then
+      # Su salida (una línea por skill) va al log: en pantalla queda una línea por agente.
+      elif run_logged "${android:-android}" skills add "--agent=$agent" "$skill"; then
         added=$((added + 1))
       else
-        error "No se pudo instalar la skill $skill para $agent"
+        error "No se pudo instalar la skill $skill para $agent: el detalle está en el log"
         summary_add fallo "skill oficial $skill para $agent"
       fi
     done 3< <(list_entries "$(android_data_dir)/skills.txt")
     [ "$present" -eq 0 ] || summary_add ya "skills oficiales de Android para $agent ($present)"
-    [ "$added" -eq 0 ] || is_dry_run || summary_add instalado "skills oficiales de Android para $agent ($added)"
+    if [ "$added" -gt 0 ] && ! is_dry_run; then
+      ok "Skills oficiales de Android instaladas para $agent ($added)"
+      summary_add instalado "skills oficiales de Android para $agent ($added)"
+    fi
   done 4< <(android_skill_agent_list)
 }
 

@@ -260,7 +260,18 @@ EOF
   load_libs
   mkdir -p "$HOME/.copilot" "$HOME/.junie" "$HOME/.config/opencode"
   [ "$(android_detect_agents)" = claude-code,github-copilot,junie,opencode ]
-  rm -rf "$HOME/.claude" "$HOME/.copilot" "$HOME/.junie" "$HOME/.config/opencode"
+  rm -rf "$HOME/.copilot" "$HOME/.junie" "$HOME/.config/opencode"
   DEV_SETUP_CLAUDE=0
+  # ~/.claude existe (lo crean los enlaces de agent-skills), pero sin el grupo claude cuenta el comando.
+  [ "$(android_detect_agents)" = claude-code ]
+  rm "$STUBS/claude"
+  hash -r
   [ "$(android_detect_agents)" = android-studio ]
+}
+
+@test "bootstrap muestra una linea por agente al instalar las skills oficiales" {
+  run "$DEV_SETUP" bootstrap --yes
+  [ "$status" -eq 0 ]
+  grep -qx 'android skills add --agent=claude-code skill-missing' "$FAKE_LOG"
+  [[ "$output" == *"Skills oficiales de Android instaladas para claude-code (1)"* ]]
 }
